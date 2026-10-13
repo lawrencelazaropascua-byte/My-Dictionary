@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Study Dictionary</title>
+  <title>My Dictionary</title>
   <style>
     :root {
       --primary-color: #4a90e2;
-      --bg-color: #f8f9fa;
+      --bg-color: #f4f7f6;
       --card-bg: #ffffff;
-      --text-color: #212529;
-      --muted-color: #555555;
-      --border-color: #dee2e6;
+      --text-color: #333333;
+      --muted-color: #666666;
+      --border-color: #e0e0e0;
     }
 
     * {
@@ -38,7 +38,7 @@
 
     h1 {
       text-align: center;
-      margin-bottom: 25px;
+      margin-bottom: 20px;
       color: var(--primary-color);
     }
 
@@ -55,6 +55,7 @@
       border: 2px solid var(--border-color);
       border-radius: 8px;
       outline: none;
+      transition: border-color 0.2s;
     }
 
     input[type="text"]:focus {
@@ -70,72 +71,91 @@
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
+      transition: background-color 0.2s;
     }
 
     button#searchBtn:hover {
       background-color: #357abd;
     }
 
+    button#searchBtn:disabled {
+      background-color: #a0c4f1;
+      cursor: not-allowed;
+    }
+
     .result-card {
       background: var(--card-bg);
-      padding: 30px;
+      padding: 25px;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
       display: none;
-      border: 1px solid var(--border-color);
+    }
+
+    .word-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
     }
 
     .word-title {
       font-size: 32px;
       font-weight: bold;
-      color: var(--primary-color);
-      margin-bottom: 20px;
       text-transform: capitalize;
-      border-bottom: 2px solid var(--border-color);
-      padding-bottom: 10px;
     }
 
-    .section-block {
+    .phonetics-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
       margin-bottom: 20px;
     }
 
-    .label {
-      font-weight: bold;
-      color: #111;
-      font-size: 17px;
-    }
-
-    .definition-text {
-      font-size: 17px;
-      display: inline;
-    }
-
-    .phonetics-badge {
-      display: inline-block;
+    .phonetic-badge {
       background: #eef5fc;
       color: var(--primary-color);
       padding: 4px 10px;
       border-radius: 6px;
-      font-size: 15px;
-      font-weight: 600;
-      margin-left: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .samples-header {
+    .audio-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 0;
+    }
+
+    .part-of-speech {
+      font-style: italic;
+      color: var(--primary-color);
       font-weight: bold;
-      font-size: 17px;
-      margin-bottom: 10px;
-    }
-
-    ul.sample-list {
-      list-style-type: disc;
-      padding-left: 20px;
-    }
-
-    ul.sample-list li {
+      margin-top: 15px;
       margin-bottom: 8px;
+      font-size: 18px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 4px;
+    }
+
+    .meaning-item {
+      margin-bottom: 12px;
+      padding-left: 10px;
+    }
+
+    .definition {
+      font-weight: 500;
+    }
+
+    .example {
       color: var(--muted-color);
-      font-size: 16px;
+      font-style: italic;
+      margin-top: 3px;
+      font-size: 14px;
     }
 
     .status-msg {
@@ -145,105 +165,123 @@
       font-weight: 500;
     }
 
-    .error-msg { color: #d9534f; }
-    .loading-msg { color: var(--primary-color); }
+    .error-msg {
+      color: #d9534f;
+    }
+
+    .loading-msg {
+      color: var(--primary-color);
+    }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <h1>📖 My Study Dictionary</h1>
+    <h1>📖 My Dictionary</h1>
 
     <div class="search-box">
-      <input type="text" id="wordInput" placeholder="Type any word, phrase or idiom..." />
+      <input type="text" id="wordInput" placeholder="Type a word (e.g., hello, chromosome)..." />
       <button id="searchBtn">Search</button>
     </div>
 
     <div id="statusMsg" class="status-msg"></div>
 
     <div id="resultCard" class="result-card">
-      <div class="word-title" id="wordDisplay"></div>
-
-      <div class="section-block">
-        <span class="label">Definition:</span> 
-        <span class="definition-text" id="defDisplay"></span>
+      <div class="word-header">
+        <span class="word-title" id="wordDisplay"></span>
       </div>
 
-      <div class="section-block">
-        <span class="label">Phonetics:</span> 
-        <span id="phoneticDisplay"></span>
-      </div>
+      <div class="phonetics-list" id="phoneticsList"></div>
 
-      <div class="section-block">
-        <div class="samples-header">Sample Sentences:</div>
-        <ul class="sample-list" id="samplesDisplay"></ul>
-      </div>
+      <div id="meaningsContainer"></div>
     </div>
   </div>
 
   <script>
-    const dictionaryDatabase = {
-      "convenient": {
-        word: "convenient",
-        phonetic: "[kuhn-veen-yuhnt]",
-        definition: "Fitting in well with a person's needs, activities, or plans; causing little trouble, difficulty, or effort; easy to reach or use.",
-        examples: [
-          "Living within walking distance of the subway station makes commuting to work extremely <strong>convenient</strong>.",
-          "The online banking app offers a <strong>convenient</strong> way to pay bills and check account balances without visiting a branch."
+    // Built-in offline database for key study words & common terms
+    const localDatabase = {
+      "hello": {
+        word: "hello",
+        phonetic: "/həˈloʊ/",
+        meanings: [
+          {
+            partOfSpeech: "interjection",
+            definitions: [
+              { definition: "Used as a greeting or to begin a phone conversation.", example: "Hello, how are you doing today?" }
+            ]
+          }
         ]
       },
-      "there": {
-        word: "there",
-        phonetic: "[thair]",
-        definition: "In, at, or to that place or position.",
-        examples: [
-          "Put the books down right <strong>there</strong> on the table.",
-          "We went to Paris last year and stayed <strong>there</strong> for a week."
+      "chromosome": {
+        word: "chromosome",
+        phonetic: "/ˈkroʊ.mə.soʊm/",
+        meanings: [
+          {
+            partOfSpeech: "noun",
+            definitions: [
+              { definition: "A threadlike structure of nucleic acids and protein found in the nucleus of most living cells, carrying genetic information in the form of genes.", example: "Evidence shows that two separate ancestral chromosomes were welded together to form human chromosome 2." }
+            ]
+          }
         ]
       },
-      "secretary": {
-        word: "secretary",
-        phonetic: "[sek-ri-ter-ee]",
-        definition: "A person employed in an office to assist with correspondence, keep records, and make arrangements.",
-        examples: [
-          "He will be a capable <strong>secretary</strong> for our department.",
-          "The <strong>secretary</strong> scheduled the meeting for tomorrow morning."
+      "evolution": {
+        word: "evolution",
+        phonetic: "/ˌɛv.əˈluː.ʃən/",
+        meanings: [
+          {
+            partOfSpeech: "noun",
+            definitions: [
+              { definition: "The process by which different kinds of living organisms are thought to have developed and diversified from earlier forms during the history of the earth.", example: "Evolution explains the presence of vestigial traits across animal species." }
+            ]
+          }
         ]
       },
-      "typical": {
-        word: "typical",
-        phonetic: "[tip-i-kuhl]",
-        definition: "Having the distinctive qualities of a particular type of person or thing.",
-        examples: [
-          "This is a <strong>typical</strong> day in our busy office.",
-          "Rain in the afternoon is <strong>typical</strong> for this season."
+      "vestigial": {
+        word: "vestigial",
+        phonetic: "/vɛˈstɪdʒ.i.əl/",
+        meanings: [
+          {
+            partOfSpeech: "adjective",
+            definitions: [
+              { definition: "Forming a very small remnant of something that was once much larger or more noticeable.", example: "Our bodies contain vestigial features like the tailbone and goosebumps." }
+            ]
+          }
         ]
       },
-      "landlord": {
-        word: "landlord",
-        phonetic: "[land-lawrd]",
-        definition: "A person who rents out land, a building, or apartment to a tenant.",
-        examples: [
-          "The <strong>landlord</strong> fixed the kitchen door right away.",
-          "We need to inform the <strong>landlord</strong> about the leaky faucet."
+      "capable": {
+        word: "capable",
+        phonetic: "/ˈkeɪ.pə.bəl/",
+        meanings: [
+          {
+            partOfSpeech: "adjective",
+            definitions: [
+              { definition: "Having the ability, fitness, or quality necessary to do or achieve a specified thing.", example: "He will be a capable secretary." }
+            ]
+          }
         ]
       },
-      "piece of cake": {
-        word: "piece of cake",
-        phonetic: "[pees-uhv-kayk]",
-        definition: "Something very easy to do or accomplish.",
-        examples: [
-          "Passing the grammar test turned out to be a <strong>piece of cake</strong>.",
-          "Fixing that broken chair was a <strong>piece of cake</strong> for him."
+      "art": {
+        word: "art",
+        phonetic: "/ɑːrt/",
+        meanings: [
+          {
+            partOfSpeech: "noun",
+            definitions: [
+              { definition: "The expression or application of human creative skill and imagination.", example: "I learned about art during my class." }
+            ]
+          }
         ]
       },
-      "break a leg": {
-        word: "break a leg",
-        phonetic: "[brayk-uh-leg]",
-        definition: "An idiom used to wish someone good luck, especially before a performance.",
-        examples: [
-          "Before going on stage, all her friends told her to <strong>break a leg</strong>.",
-          "You'll do amazing at the audition—just go out there and <strong>break a leg</strong>!"
+      "school": {
+        word: "school",
+        phonetic: "/skuːl/",
+        meanings: [
+          {
+            partOfSpeech: "noun",
+            definitions: [
+              { definition: "An institution for educating children or adults.", example: "Have Debbie and Danny left for school now?" }
+            ]
+          }
         ]
       }
     };
@@ -254,93 +292,122 @@
     const resultCard = document.getElementById("resultCard");
 
     searchBtn.addEventListener("click", searchWord);
-    wordInput.addEventListener("keydown", (e) => { if (e.key === "Enter") searchWord(); });
-
-    // Utility: sanitize HTML to prevent XSS
-    function escapeHtml(str) {
-      const div = document.createElement("div");
-      div.appendChild(document.createTextNode(str));
-      return div.innerHTML;
-    }
+    wordInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") searchWord();
+    });
 
     async function searchWord() {
       const rawWord = wordInput.value.trim();
       const word = rawWord.toLowerCase();
 
       if (!word) {
-        statusMsg.innerText = "Please enter a word, phrase, or idiom first.";
+        statusMsg.innerText = "Please enter a word first.";
         statusMsg.className = "status-msg error-msg";
         return;
       }
 
-      statusMsg.innerText = "Searching...";
+      statusMsg.innerText = "Searching definition...";
       statusMsg.className = "status-msg loading-msg";
       resultCard.style.display = "none";
       searchBtn.disabled = true;
 
-      // 1. Check local database first
-      if (dictionaryDatabase[word]) {
-        statusMsg.innerText = "";
-        statusMsg.className = "status-msg"; // FIX #3: reset to neutral
-        displayLayout(dictionaryDatabase[word].word, dictionaryDatabase[word].definition, dictionaryDatabase[word].phonetic, dictionaryDatabase[word].examples);
-        searchBtn.disabled = false;
-        return;
-      }
-
-      // 2. Fallback to live dictionary API
+      // 1. Try public API first with 3 second timeout
       try {
-        const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
-        if (!response.ok) throw new Error("Not found");
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+        const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`, {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) throw new Error("API word not found");
 
         const data = await response.json();
-        const entry = data[0];
-
-        let foundDef = entry.meanings?.[0]?.definitions?.[0]?.definition || "Definition not available.";
-        let foundEx = [];
-        
-        if (entry.meanings[0].definitions[0]?.example) {
-          foundEx.push(entry.meanings[0].definitions[0].example);
-        }
-        if (entry.meanings[0].definitions[1]?.example) {
-          foundEx.push(entry.meanings[0].definitions[1].example);
-        }
-        if (foundEx.length === 0) {
-          foundEx.push(`This is a sample sentence using the word <strong>${escapeHtml(entry.word)}</strong>.`);
-        }
-
-        let phoneticText = entry.phonetic || (entry.phonetics && entry.phonetics.find(p => p.text)?.text) || word;
-        phoneticText = `[${phoneticText.replace(/\//g, '')}]`;
-
         statusMsg.innerText = "";
-        statusMsg.className = "status-msg"; // FIX #3: reset to neutral
-        displayLayout(entry.word, foundDef, phoneticText, foundEx);
+        displayResult(data[0]);
       } catch (error) {
-        statusMsg.innerText = `"${escapeHtml(rawWord)}" not found. Check your spelling or try another term!`;
-        statusMsg.className = "status-msg error-msg";
+        // 2. Fallback to local database if API fails or times out
+        if (localDatabase[word]) {
+          statusMsg.innerText = "";
+          displayLocalResult(localDatabase[word]);
+        } else {
+          statusMsg.innerText = `Word "${rawWord}" not found in online or offline dictionary. Try words like "hello", "chromosome", "evolution", or "vestigial".`;
+          statusMsg.className = "status-msg error-msg";
+        }
       } finally {
         searchBtn.disabled = false;
       }
     }
 
-    function displayLayout(word, definition, phonetic, examples) {
-      document.getElementById("wordDisplay").textContent = word; // FIX #1: textContent
-      document.getElementById("defDisplay").textContent = definition; // FIX #1
+    function displayResult(data) {
+      document.getElementById("wordDisplay").innerText = data.word;
+      const phoneticsList = document.getElementById("phoneticsList");
+      const meaningsContainer = document.getElementById("meaningsContainer");
 
-      const phoneticSpan = document.getElementById("phoneticDisplay");
-      phoneticSpan.innerHTML = `<span class="phonetics-badge">${phonetic}</span>`;
+      phoneticsList.innerHTML = "";
+      if (data.phonetics) {
+        data.phonetics.forEach(p => {
+          if (p.text) {
+            const badge = document.createElement("span");
+            badge.className = "phonetic-badge";
+            badge.innerText = p.text;
 
-      const samplesList = document.getElementById("samplesDisplay");
-      samplesList.innerHTML = "";
-      examples.forEach(ex => {
-        const li = document.createElement("li");
-        // FIX #1: for local DB data, innerHTML is safe (we control the data)
-        // For API data, sanitize first. We handle this by checking source,
-        // but the simplest safe approach: strip HTML from API examples.
-        li.innerHTML = ex;
-        samplesList.appendChild(li);
-      });
+            if (p.audio) {
+              const playBtn = document.createElement("button");
+              playBtn.className = "audio-btn";
+              playBtn.innerText = "🔊";
+              playBtn.onclick = () => new Audio(p.audio).play();
+              badge.appendChild(playBtn);
+            }
+            phoneticsList.appendChild(badge);
+          }
+        });
+      }
 
+      renderMeanings(data.meanings, meaningsContainer);
       resultCard.style.display = "block";
+    }
+
+    function displayLocalResult(data) {
+      document.getElementById("wordDisplay").innerText = data.word;
+      const phoneticsList = document.getElementById("phoneticsList");
+      const meaningsContainer = document.getElementById("meaningsContainer");
+
+      phoneticsList.innerHTML = "";
+      if (data.phonetic) {
+        const badge = document.createElement("span");
+        badge.className = "phonetic-badge";
+        badge.innerText = data.phonetic;
+        phoneticsList.appendChild(badge);
+      }
+
+      renderMeanings(data.meanings, meaningsContainer);
+      resultCard.style.display = "block";
+    }
+
+    function renderMeanings(meanings, container) {
+      container.innerHTML = "";
+      meanings.forEach(m => {
+        const pos = document.createElement("div");
+        pos.className = "part-of-speech";
+        pos.innerText = m.partOfSpeech;
+        container.appendChild(pos);
+
+        const ol = document.createElement("ol");
+        ol.style.paddingLeft = "20px";
+
+        m.definitions.forEach(d => {
+          const li = document.createElement("li");
+          li.className = "meaning-item";
+          let html = `<div class="definition">${d.definition}</div>`;
+          if (d.example) html += `<div class="example">"<strong>Example:</strong> ${d.example}"</div>`;
+          li.innerHTML = html;
+          ol.appendChild(li);
+        });
+
+        container.appendChild(ol);
+      });
     }
   </script>
 </body>
