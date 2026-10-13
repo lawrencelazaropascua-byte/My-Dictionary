@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Dictionary</title>
+  <title>My Dictionary & Idioms</title>
   <style>
     :root {
       --primary-color: #4a90e2;
@@ -123,6 +123,15 @@
       gap: 6px;
     }
 
+    .audio-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 0;
+      margin-left: 5px;
+    }
+
     .part-of-speech {
       font-style: italic;
       color: var(--primary-color);
@@ -169,10 +178,10 @@
 <body>
 
   <div class="container">
-    <h1>📖 My Dictionary</h1>
+    <h1>📖 Dictionary & Idioms</h1>
 
     <div class="search-box">
-      <input type="text" id="wordInput" placeholder="Type a word (e.g., secretary, typical)..." />
+      <input type="text" id="wordInput" placeholder="Type any word or idiom (e.g., evolution, piece of cake)..." />
       <button id="searchBtn">Search</button>
     </div>
 
@@ -190,8 +199,32 @@
   </div>
 
   <script>
-    // Enhanced local dictionary database with readable phonetic respellings
-    const localDatabase = {
+    // Custom database for your priority words/idioms with custom syllable phonetic spellings
+    const customDatabase = {
+      "piece of cake": {
+        word: "piece of cake",
+        phonetic: "[pees-uhv-kayk]",
+        meanings: [
+          {
+            partOfSpeech: "idiom",
+            definitions: [
+              { definition: "Something very easy to do.", example: "Passing the English grammar test was a piece of cake." }
+            ]
+          }
+        ]
+      },
+      "break a leg": {
+        word: "break a leg",
+        phonetic: "[brayk-uh-leg]",
+        meanings: [
+          {
+            partOfSpeech: "idiom",
+            definitions: [
+              { definition: "A way to wish someone good luck, especially before a performance.", example: "Before going on stage, her friends told her to break a leg." }
+            ]
+          }
+        ]
+      },
       "secretary": {
         word: "secretary",
         phonetic: "[sek-ri-ter-ee]",
@@ -227,42 +260,6 @@
             ]
           }
         ]
-      },
-      "chromosome": {
-        word: "chromosome",
-        phonetic: "[kroʊ-muh-soʊm]",
-        meanings: [
-          {
-            partOfSpeech: "noun",
-            definitions: [
-              { definition: "A threadlike structure carrying genetic information in the form of genes.", example: "Human chromosome 2 was formed by welded ancestral chromosomes." }
-            ]
-          }
-        ]
-      },
-      "vestigial": {
-        word: "vestigial",
-        phonetic: "[veh-stij-ee-uhl]",
-        meanings: [
-          {
-            partOfSpeech: "adjective",
-            definitions: [
-              { definition: "Forming a small remnant of something that was once much larger.", example: "Our bodies contain vestigial features like the tailbone." }
-            ]
-          }
-        ]
-      },
-      "school": {
-        word: "school",
-        phonetic: "[skuːl]",
-        meanings: [
-          {
-            partOfSpeech: "noun",
-            definitions: [
-              { definition: "An institution for educating children or adults.", example: "Have Debbie and Danny left for school now?" }
-            ]
-          }
-        ]
       }
     };
 
@@ -281,7 +278,7 @@
       const word = rawWord.toLowerCase();
 
       if (!word) {
-        statusMsg.innerText = "Please enter a word first.";
+        statusMsg.innerText = "Please enter a word or idiom first.";
         statusMsg.className = "status-msg error-msg";
         return;
       }
@@ -291,20 +288,42 @@
       resultCard.style.display = "none";
       searchBtn.disabled = true;
 
-      // Check local database first for instant, accurate phonetic respellings
-      setTimeout(() => {
-        if (localDatabase[word]) {
-          statusMsg.innerText = "";
-          displayLocalResult(localDatabase[word]);
-        } else {
-          statusMsg.innerText = `Word "${rawWord}" not found. Try searching for "secretary", "typical", "landlord", or "vestigial".`;
-          statusMsg.className = "status-msg error-msg";
-        }
+      // 1. Check custom database first (for your curated phonetics and idioms)
+      if (customDatabase[word]) {
+        statusMsg.innerText = "";
+        displayCustomResult(customDatabase[word]);
         searchBtn.disabled = false;
-      }, 300);
+        return;
+      }
+
+      // 2. If not in custom list, search ALL words/phrases live online via API
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000); // 4-second timeout limit
+
+        const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`, {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`Word or phrase "${rawWord}" not found.`);
+        }
+
+        const data = await response.json();
+        statusMsg.innerText = "";
+        displayLiveResult(data[0]);
+      } catch (error) {
+        statusMsg.innerText = error.name === 'AbortError' 
+          ? "Connection timed out. Please check your internet." 
+          : `"${rawWord}" not found. Check your spelling or try another word!`;
+        statusMsg.className = "status-msg error-msg";
+      } finally {
+        searchBtn.disabled = false;
+      }
     }
 
-    function displayLocalResult(data) {
+    function displayCustomResult(data) {
       document.getElementById("wordDisplay").innerText = data.word;
       const phoneticsList = document.getElementById("phoneticsList");
       const meaningsContainer = document.getElementById("meaningsContainer");
@@ -313,8 +332,37 @@
       if (data.phonetic) {
         const badge = document.createElement("span");
         badge.className = "phonetic-badge";
-        badge.innerText = `🔊 ${data.phonetic}`;
+        badge.innerText = `💡 ${data.phonetic}`;
         phoneticsList.appendChild(badge);
+      }
+
+      renderMeanings(data.meanings, meaningsContainer);
+      resultCard.style.display = "block";
+    }
+
+    function displayLiveResult(data) {
+      document.getElementById("wordDisplay").innerText = data.word;
+      const phoneticsList = document.getElementById("phoneticsList");
+      const meaningsContainer = document.getElementById("meaningsContainer");
+
+      phoneticsList.innerHTML = "";
+      if (data.phonetics && data.phonetics.length > 0) {
+        data.phonetics.forEach(p => {
+          if (p.text) {
+            const badge = document.createElement("span");
+            badge.className = "phonetic-badge";
+            badge.innerText = p.text;
+
+            if (p.audio) {
+              const playBtn = document.createElement("button");
+              playBtn.className = "audio-btn";
+              playBtn.innerText = "🔊";
+              playBtn.onclick = () => new Audio(p.audio).play();
+              badge.appendChild(playBtn);
+            }
+            phoneticsList.appendChild(badge);
+          }
+        });
       }
 
       renderMeanings(data.meanings, meaningsContainer);
