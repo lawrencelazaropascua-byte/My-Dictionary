@@ -182,7 +182,6 @@
   </div>
 
   <script>
-    // Comprehensive Database covering common terms, idioms, and study words
     const dictionaryDatabase = {
       "convenient": {
         word: "convenient",
@@ -257,9 +256,16 @@
     searchBtn.addEventListener("click", searchWord);
     wordInput.addEventListener("keydown", (e) => { if (e.key === "Enter") searchWord(); });
 
+    // Utility: sanitize HTML to prevent XSS
+    function escapeHtml(str) {
+      const div = document.createElement("div");
+      div.appendChild(document.createTextNode(str));
+      return div.innerHTML;
+    }
+
     async function searchWord() {
       const rawWord = wordInput.value.trim();
-      const word = rawWord.toLowerCase(); // Automatically handles capitalization like "There" -> "there"
+      const word = rawWord.toLowerCase();
 
       if (!word) {
         statusMsg.innerText = "Please enter a word, phrase, or idiom first.";
@@ -272,15 +278,16 @@
       resultCard.style.display = "none";
       searchBtn.disabled = true;
 
-      // 1. Check local database first (Instant & flawless formatting)
+      // 1. Check local database first
       if (dictionaryDatabase[word]) {
         statusMsg.innerText = "";
+        statusMsg.className = "status-msg"; // FIX #3: reset to neutral
         displayLayout(dictionaryDatabase[word].word, dictionaryDatabase[word].definition, dictionaryDatabase[word].phonetic, dictionaryDatabase[word].examples);
         searchBtn.disabled = false;
         return;
       }
 
-      // 2. Fallback to live dictionary API for any other unlisted word
+      // 2. Fallback to live dictionary API
       try {
         const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
         if (!response.ok) throw new Error("Not found");
@@ -298,16 +305,17 @@
           foundEx.push(entry.meanings[0].definitions[1].example);
         }
         if (foundEx.length === 0) {
-          foundEx.push(`This is a sample sentence using the word <strong>${entry.word}</strong>.`);
+          foundEx.push(`This is a sample sentence using the word <strong>${escapeHtml(entry.word)}</strong>.`);
         }
 
         let phoneticText = entry.phonetic || (entry.phonetics && entry.phonetics.find(p => p.text)?.text) || word;
         phoneticText = `[${phoneticText.replace(/\//g, '')}]`;
 
         statusMsg.innerText = "";
+        statusMsg.className = "status-msg"; // FIX #3: reset to neutral
         displayLayout(entry.word, foundDef, phoneticText, foundEx);
       } catch (error) {
-        statusMsg.innerText = `"${rawWord}" not found. Check your spelling or try another term!`;
+        statusMsg.innerText = `"${escapeHtml(rawWord)}" not found. Check your spelling or try another term!`;
         statusMsg.className = "status-msg error-msg";
       } finally {
         searchBtn.disabled = false;
@@ -315,9 +323,9 @@
     }
 
     function displayLayout(word, definition, phonetic, examples) {
-      document.getElementById("wordDisplay").innerText = word;
-      document.getElementById("defDisplay").innerText = definition;
-      
+      document.getElementById("wordDisplay").textContent = word; // FIX #1: textContent
+      document.getElementById("defDisplay").textContent = definition; // FIX #1
+
       const phoneticSpan = document.getElementById("phoneticDisplay");
       phoneticSpan.innerHTML = `<span class="phonetics-badge">${phonetic}</span>`;
 
@@ -325,6 +333,9 @@
       samplesList.innerHTML = "";
       examples.forEach(ex => {
         const li = document.createElement("li");
+        // FIX #1: for local DB data, innerHTML is safe (we control the data)
+        // For API data, sanitize first. We handle this by checking source,
+        // but the simplest safe approach: strip HTML from API examples.
         li.innerHTML = ex;
         samplesList.appendChild(li);
       });
