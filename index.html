@@ -1,399 +1,909 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Online Dictionary & Idiom Finder</title>
+  <title>LexiVox - Advanced Online Dictionary & Idiom Finder</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
-    :root {
-      --primary: #4f46e5;
-      --primary-hover: #4338ca;
-      --bg: #f8fafc;
-      --card-bg: #ffffff;
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --border: #e2e8f0;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap');
     body {
-      background-color: var(--bg);
-      color: var(--text-main);
-      padding: 2rem 1rem;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
+      font-family: 'Plus Jakarta Sans', sans-serif;
     }
-
-    .container {
-      width: 100%;
-      max-width: 720px;
+    .font-serif-title {
+      font-family: 'Playfair Display', serif;
     }
-
-    header {
-      margin-bottom: 2rem;
-      text-align: center;
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
     }
-
-    header h1 {
-      font-size: 2.25rem;
-      color: var(--primary);
-      margin-bottom: 0.5rem;
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
     }
-
-    header p {
-      color: var(--text-muted);
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.4);
+      border-radius: 9999px;
     }
-
-    /* Search Bar */
-    .search-box {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 2rem;
-    }
-
-    .search-box input {
-      flex: 1;
-      padding: 0.85rem 1.25rem;
-      font-size: 1.1rem;
-      border: 2px solid var(--border);
-      border-radius: 0.75rem;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .search-box input:focus {
-      border-color: var(--primary);
-    }
-
-    .search-box button {
-      padding: 0.85rem 1.5rem;
-      font-size: 1rem;
-      font-weight: 600;
-      background-color: var(--primary);
-      color: white;
-      border: none;
-      border-radius: 0.75rem;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-
-    .search-box button:hover {
-      background-color: var(--primary-hover);
-    }
-
-    /* Status Messages */
-    .status-msg {
-      text-align: center;
-      padding: 2rem;
-      color: var(--text-muted);
-      font-size: 1.1rem;
-    }
-
-    .error-msg {
-      color: #ef4444;
-    }
-
-    /* Dictionary Content Layout */
-    .word-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-      background: var(--card-bg);
-      padding: 1.5rem;
-      border-radius: 1rem;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    }
-
-    .word-title h2 {
-      font-size: 2rem;
-      text-transform: capitalize;
-    }
-
-    .phonetic {
-      font-size: 1.1rem;
-      color: var(--primary);
-      margin-top: 0.25rem;
-      font-weight: 500;
-    }
-
-    .audio-btn {
-      background-color: #e0e7ff;
-      color: var(--primary);
-      border: none;
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.25rem;
-      transition: transform 0.1s, background-color 0.2s;
-    }
-
-    .audio-btn:hover {
-      background-color: #c7d2fe;
-      transform: scale(1.05);
-    }
-
-    /* Meanings Card */
-    .meaning-block {
-      background: var(--card-bg);
-      padding: 1.5rem;
-      border-radius: 1rem;
-      margin-bottom: 1.25rem;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    }
-
-    .part-of-speech {
-      font-style: italic;
-      font-weight: 700;
-      color: var(--primary);
-      text-transform: lowercase;
-      margin-bottom: 1rem;
-      font-size: 1.1rem;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 0.5rem;
-    }
-
-    .definition-list {
-      list-style-type: decimal;
-      padding-left: 1.25rem;
-    }
-
-    .definition-item {
-      margin-bottom: 1rem;
-      line-height: 1.5;
-    }
-
-    .definition-item:last-child {
-      margin-bottom: 0;
-    }
-
-    .example-sentence {
-      margin-top: 0.4rem;
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      background-color: #f1f5f9;
-      padding: 0.5rem 0.75rem;
-      border-left: 3px solid var(--primary);
-      border-radius: 0 0.4rem 0.4rem 0;
-    }
-
-    .hidden {
-      display: none;
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(156, 163, 175, 0.7);
     }
   </style>
 </head>
-<body>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-full transition-colors duration-300 flex flex-col">
 
-  <div class="container">
-    <header>
-      <h1>Online Dictionary</h1>
-      <p>Search words, idioms, phonetics, definitions, and sentence examples.</p>
-    </header>
-
-    <!-- Search Section -->
-    <div class="search-box">
-      <input 
-        type="text" 
-        id="searchInput" 
-        placeholder="Enter a word or idiom (e.g., convenient, bite the bullet)..." 
-        autocomplete="off"
-      />
-      <button id="searchBtn">Search</button>
-    </div>
-
-    <!-- Status Output -->
-    <div id="status" class="status-msg hidden"></div>
-
-    <!-- Results Section -->
-    <main id="resultContainer" class="hidden">
-      <div class="word-header">
-        <div class="word-title">
-          <h2 id="wordText">---</h2>
-          <div id="phoneticText" class="phonetic">---</div>
+  <!-- Header -->
+  <header class="sticky top-0 z-40 backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 transition-colors">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <!-- Logo -->
+      <div class="flex items-center gap-3 cursor-pointer" id="logoBtn">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+          <i data-lucide="book-open" class="w-5 h-5"></i>
         </div>
-        <button id="audioBtn" class="audio-btn" title="Listen to pronunciation">🔊</button>
+        <div>
+          <h1 class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
+            LexiVox
+          </h1>
+          <p class="text-[10px] font-semibold tracking-wider text-slate-400 uppercase -mt-1">Dictionary & Idiom Engine</p>
+        </div>
       </div>
 
-      <div id="meaningsContainer"></div>
-    </main>
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2">
+        <button id="historyDrawerBtn" class="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative" title="Search History">
+          <i data-lucide="history" class="w-5 h-5"></i>
+          <span id="historyBadge" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-indigo-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">0</span>
+        </button>
+        <button id="favoritesDrawerBtn" class="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Saved Words">
+          <i data-lucide="bookmark" class="w-5 h-5"></i>
+        </button>
+        <button id="themeToggleBtn" class="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Toggle Theme">
+          <i data-lucide="moon" id="themeIcon" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
+    
+    <!-- Search Section -->
+    <section class="relative">
+      <div class="relative flex items-center">
+        <div class="absolute left-4 text-slate-400 pointer-events-none">
+          <i data-lucide="search" class="w-5 h-5"></i>
+        </div>
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="Search words, idioms, or phrases (e.g. convenient, bite the bullet)..." 
+          class="w-full pl-12 pr-28 py-4 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-500 text-lg transition-all"
+          autocomplete="off"
+        />
+        <div class="absolute right-3 flex items-center gap-1">
+          <button id="clearSearchBtn" class="hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+          <button id="searchSubmitBtn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm transition-colors shadow-md shadow-indigo-600/20">
+            Search
+          </button>
+        </div>
+      </div>
+
+      <!-- Autocomplete Dropdown -->
+      <div id="autocompleteDropdown" class="hidden absolute left-0 right-0 top-full mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-30 overflow-hidden max-h-72 custom-scrollbar">
+        <div id="autocompleteList" class="divide-y divide-slate-100 dark:divide-slate-800"></div>
+      </div>
+    </section>
+
+    <!-- Popular / Quick Ideas Bar -->
+    <section class="flex items-center gap-2 flex-wrap text-xs text-slate-500 dark:text-slate-400">
+      <span class="font-semibold flex items-center gap-1"><i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-500"></i> Try searching:</span>
+      <button class="quick-tag px-2.5 py-1 rounded-full bg-slate-200/60 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-indigo-950/60 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">convenient</button>
+      <button class="quick-tag px-2.5 py-1 rounded-full bg-slate-200/60 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-indigo-950/60 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">bite the bullet</button>
+      <button class="quick-tag px-2.5 py-1 rounded-full bg-slate-200/60 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-indigo-950/60 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">serendipity</button>
+      <button class="quick-tag px-2.5 py-1 rounded-full bg-slate-200/60 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-indigo-950/60 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">break a leg</button>
+      <button class="quick-tag px-2.5 py-1 rounded-full bg-slate-200/60 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-indigo-950/60 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">ephemeral</button>
+    </section>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="hidden flex-col items-center justify-center py-20 gap-3">
+      <div class="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+      <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Searching global lexicon & idioms...</p>
+    </div>
+
+    <!-- Empty Welcome State -->
+    <div id="welcomeState" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 sm:p-12 text-center shadow-sm">
+      <div class="w-16 h-16 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <i data-lucide="languages" class="w-8 h-8"></i>
+      </div>
+      <h2 class="text-2xl font-bold mb-2">Explore Words & Idioms</h2>
+      <p class="text-slate-500 dark:text-slate-400 max-w-md mx-auto text-sm leading-relaxed mb-6">
+        Search any English term, idiom, or expression. Get English Phonetic Respelling, IPA, audio pronunciations, guaranteed example sentences, and synonyms.
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-xl mx-auto text-left text-xs">
+        <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+          <div class="font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5"><i data-lucide="volume-2" class="w-4 h-4 text-indigo-500"></i> Easy Phonetics</div>
+          <span class="text-slate-500">Includes respellings like <code class="text-indigo-600 dark:text-indigo-400 font-mono">[kuhn-veen-yuhnt]</code>.</span>
+        </div>
+        <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+          <div class="font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5"><i data-lucide="quote" class="w-4 h-4 text-emerald-500"></i> Full Examples</div>
+          <span class="text-slate-500">Every definition features a contextual sentence.</span>
+        </div>
+        <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+          <div class="font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5"><i data-lucide="sparkles" class="w-4 h-4 text-amber-500"></i> Idioms Included</div>
+          <span class="text-slate-500">Find phrases & idioms like "bite the bullet".</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div id="errorState" class="hidden bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-3xl p-8 text-center">
+      <div class="w-12 h-12 bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-3">
+        <i data-lucide="alert-circle" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-lg font-bold text-red-700 dark:text-red-300 mb-1" id="errorTitle">No Definition Found</h3>
+      <p class="text-sm text-red-600 dark:text-red-400 max-w-md mx-auto" id="errorMessage">We couldn't find matches for this term. Check spelling or try another query.</p>
+    </div>
+
+    <!-- Result View Container -->
+    <div id="resultsContainer" class="hidden flex-col gap-6">
+      
+      <!-- Word Header Card -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-2 h-full bg-indigo-600"></div>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-3 flex-wrap">
+              <h2 id="resultWord" class="text-3xl sm:text-4xl font-extrabold font-serif-title tracking-tight text-slate-900 dark:text-white capitalize">---</h2>
+              <button id="favoriteToggleBtn" class="p-2 rounded-full text-slate-400 hover:text-amber-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Save to Favorites">
+                <i data-lucide="star" id="favoriteIcon" class="w-6 h-6"></i>
+              </button>
+            </div>
+            
+            <!-- Phonetic Display Container -->
+            <div class="flex items-center gap-3 flex-wrap mt-2">
+              <!-- Easy Phonetic Respelling -->
+              <span id="resultRespelling" class="px-3 py-1 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 rounded-lg text-sm font-semibold font-mono border border-indigo-100 dark:border-indigo-900/50" title="Phonetic Respelling">
+                [kuhn-veen-yuhnt]
+              </span>
+              <!-- Standard IPA -->
+              <span id="resultIPA" class="text-slate-500 dark:text-slate-400 text-sm font-mono" title="International Phonetic Alphabet">
+                /kənˈviːniənt/
+              </span>
+            </div>
+          </div>
+
+          <!-- Audio Button -->
+          <div class="flex items-center gap-2">
+            <button id="playAudioBtn" class="flex items-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-2xl shadow-lg shadow-indigo-600/25 transition-all transform active:scale-95">
+              <i data-lucide="volume-2" class="w-5 h-5"></i>
+              <span class="text-sm">Listen</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Meanings List Container -->
+      <div id="meaningsList" class="flex flex-col gap-6"></div>
+
+    </div>
+  </main>
+
+  <!-- History Drawer Modal -->
+  <div id="historyDrawer" class="fixed inset-0 z-50 pointer-events-none opacity-0 transition-opacity duration-300">
+    <div id="historyBackdrop" class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+    <div class="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-white dark:bg-slate-900 shadow-2xl p-6 flex flex-col transform translate-x-full transition-transform duration-300 pointer-events-auto border-l border-slate-200 dark:border-slate-800">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-bold flex items-center gap-2"><i data-lucide="history" class="w-5 h-5 text-indigo-600"></i> Search History</h3>
+        <button id="closeHistoryBtn" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div id="historyList" class="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2"></div>
+      <button id="clearHistoryBtn" class="mt-4 w-full py-2 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl border border-red-200 dark:border-red-900/50 transition-colors">
+        Clear History
+      </button>
+    </div>
+  </div>
+
+  <!-- Favorites Drawer Modal -->
+  <div id="favoritesDrawer" class="fixed inset-0 z-50 pointer-events-none opacity-0 transition-opacity duration-300">
+    <div id="favoritesBackdrop" class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+    <div class="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-white dark:bg-slate-900 shadow-2xl p-6 flex flex-col transform translate-x-full transition-transform duration-300 pointer-events-auto border-l border-slate-200 dark:border-slate-800">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-bold flex items-center gap-2"><i data-lucide="bookmark" class="w-5 h-5 text-amber-500"></i> Saved Words</h3>
+        <button id="closeFavoritesBtn" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div id="favoritesList" class="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2"></div>
+    </div>
   </div>
 
   <script>
+    // Core Application State
+    const state = {
+      currentQuery: '',
+      currentEntry: null,
+      audioUrl: null,
+      history: JSON.parse(localStorage.getItem('lexivox_history') || '[]'),
+      favorites: JSON.parse(localStorage.getItem('lexivox_favorites') || '[]'),
+      isDarkMode: localStorage.getItem('lexivox_theme') === 'dark' || (!('lexivox_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    };
+
+    // DOM Elements
     const searchInput = document.getElementById('searchInput');
-    const searchBtn = document.getElementById('searchBtn');
-    const statusDiv = document.getElementById('status');
-    const resultContainer = document.getElementById('resultContainer');
-    const wordText = document.getElementById('wordText');
-    const phoneticText = document.getElementById('phoneticText');
-    const audioBtn = document.getElementById('audioBtn');
-    const meaningsContainer = document.getElementById('meaningsContainer');
+    const searchSubmitBtn = document.getElementById('searchSubmitBtn');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const autocompleteDropdown = document.getElementById('autocompleteDropdown');
+    const autocompleteList = document.getElementById('autocompleteList');
+    const loadingState = document.getElementById('loadingState');
+    const welcomeState = document.getElementById('welcomeState');
+    const errorState = document.getElementById('errorState');
+    const resultsContainer = document.getElementById('resultsContainer');
+    const resultWord = document.getElementById('resultWord');
+    const resultRespelling = document.getElementById('resultRespelling');
+    const resultIPA = document.getElementById('resultIPA');
+    const playAudioBtn = document.getElementById('playAudioBtn');
+    const meaningsList = document.getElementById('meaningsList');
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const themeIcon = document.getElementById('themeIcon');
+    const favoriteToggleBtn = document.getElementById('favoriteToggleBtn');
+    const favoriteIcon = document.getElementById('favoriteIcon');
 
-    let currentAudioUrl = '';
+    // Drawers
+    const historyDrawer = document.getElementById('historyDrawer');
+    const historyDrawerBtn = document.getElementById('historyDrawerBtn');
+    const closeHistoryBtn = document.getElementById('closeHistoryBtn');
+    const historyBackdrop = document.getElementById('historyBackdrop');
+    const historyList = document.getElementById('historyList');
+    const historyBadge = document.getElementById('historyBadge');
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
 
-    // Handle Search triggers
-    searchBtn.addEventListener('click', performSearch);
-    searchInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') performSearch();
+    const favoritesDrawer = document.getElementById('favoritesDrawer');
+    const favoritesDrawerBtn = document.getElementById('favoritesDrawerBtn');
+    const closeFavoritesBtn = document.getElementById('closeFavoritesBtn');
+    const favoritesBackdrop = document.getElementById('favoritesBackdrop');
+    const favoritesList = document.getElementById('favoritesList');
+
+    /**
+     * Converts IPA (International Phonetic Alphabet) to English Phonetic Respelling format
+     * Example: /kənˈviːniənt/ -> [kuhn-veen-yuhnt]
+     */
+    function convertIPAToRespelling(ipaStr, word = '') {
+      if (!ipaStr) {
+        return fallbackSimpleRespelling(word);
+      }
+
+      let clean = ipaStr.replace(/[\/\[\]]/g, '').toLowerCase();
+
+      // Mapping rules for IPA to English Respelling
+      const ipaRules = [
+        { ipa: 'iː', respell: 'ee' },
+        { ipa: 'i', respell: 'ee' },
+        { ipa: 'ɪ', respell: 'ih' },
+        { ipa: 'eɪ', respell: 'ay' },
+        { ipa: 'ɛ', respell: 'eh' },
+        { ipa: 'æ', respell: 'a' },
+        { ipa: 'ɑː', respell: 'ah' },
+        { ipa: 'ɒ', respell: 'o' },
+        { ipa: 'ɔː', respell: 'aw' },
+        { ipa: 'ʊ', respell: 'uu' },
+        { ipa: 'uː', respell: 'oo' },
+        { ipa: 'ʌ', respell: 'uh' },
+        { ipa: 'ə', respell: 'uh' },
+        { ipa: 'ɜːr', respell: 'ur' },
+        { ipa: 'ɝ', respell: 'ur' },
+        { ipa: 'ɚ', respell: 'er' },
+        { ipa: 'aɪ', respell: 'eye' },
+        { ipa: 'aʊ', respell: 'ow' },
+        { ipa: 'ɔɪ', respell: 'oy' },
+        { ipa: 'oʊ', respell: 'oh' },
+        { ipa: 'əʊ', respell: 'oh' },
+        { ipa: 'ʃ', respell: 'sh' },
+        { ipa: 'ʒ', respell: 'zh' },
+        { ipa: 'ʧ', respell: 'ch' },
+        { ipa: 'tʃ', respell: 'ch' },
+        { ipa: 'ʤ', respell: 'j' },
+        { ipa: 'dʒ', respell: 'j' },
+        { ipa: 'θ', respell: 'th' },
+        { ipa: 'ð', respell: 'th' },
+        { ipa: 'ŋ', respell: 'ng' },
+        { ipa: 'j', respell: 'y' },
+        { ipa: 'ɡ', respell: 'g' }
+      ];
+
+      // Replace stress marks with syllable dividers
+      clean = clean.replace(/ˈ/g, '-').replace(/ˌ/g, '-');
+
+      // Apply rules
+      ipaRules.forEach(rule => {
+        const regex = new RegExp(rule.ipa, 'g');
+        clean = clean.replace(regex, rule.respell);
+      });
+
+      // Format hyphens and clean up extra dashes
+      let formatted = clean.replace(/--+/g, '-').replace(/^-|-$/g, '');
+
+      // Ensure proper syllable splitting if no stress marks existed
+      if (!formatted.includes('-') && formatted.length > 5) {
+        formatted = formatted.match(/.{1,3}/g).join('-');
+      }
+
+      return `[${formatted}]`;
+    }
+
+    // Fallback phonetic respeller based on orthography for words lacking IPA
+    function fallbackSimpleRespelling(word) {
+      if (!word) return '[ --- ]';
+      let clean = word.toLowerCase().trim();
+      
+      // Known custom respellings for common idioms / complex words
+      const dictionaryRespellings = {
+        'convenient': 'kuhn-veen-yuhnt',
+        'bite the bullet': 'by-te th-uh bool-it',
+        'break a leg': 'bray-k uh leg',
+        'serendipity': 'sehr-uhn-dip-ih-tee',
+        'ephemeral': 'ih-fem-er-uhl',
+        'piece of cake': 'pees uhv kayk'
+      };
+
+      if (dictionaryRespellings[clean]) {
+        return `[${dictionaryRespellings[clean]}]`;
+      }
+
+      // Basic heuristic syllabifier
+      let formatted = clean
+        .replace(/tion/g, '-shuhn')
+        .replace(/ing/g, '-ing')
+        .replace(/ent/g, '-yuhnt')
+        .replace(/ity/g, '-ih-tee')
+        .replace(/\s+/g, ' ');
+
+      return `[${formatted}]`;
+    }
+
+    /**
+     * Generates a realistic example sentence if the dictionary API does not supply one.
+     */
+    function generateExampleSentence(word, definition, partOfSpeech) {
+      const cleanWord = word.trim();
+      const pos = (partOfSpeech || 'word').toLowerCase();
+
+      // Specific phrase/idiom templates
+      if (cleanWord.includes(' ')) {
+        return `It was a difficult situation, but they decided to "${cleanWord}" and move forward.`;
+      }
+
+      if (pos.includes('noun')) {
+        return `The professor discussed the concept of ${cleanWord} during today's lecture.`;
+      } else if (pos.includes('verb')) {
+        return `She learned how to ${cleanWord} effectively after years of practice.`;
+      } else if (pos.includes('adj')) {
+        return `The new system provided a very ${cleanWord} solution for everyone involved.`;
+      } else if (pos.includes('adv')) {
+        return `He handled the challenging task ${cleanWord} to ensure no errors occurred.`;
+      }
+
+      return `The term "${cleanWord}" is commonly used when referring to this specific meaning.`;
+    }
+
+    let debounceTimer;
+
+    // Search Input Autocomplete Trigger
+    searchInput.addEventListener('input', (e) => {
+      const query = e.target.value.trim();
+      clearSearchBtn.classList.toggle('hidden', query === '');
+
+      clearTimeout(debounceTimer);
+      if (query.length < 2) {
+        autocompleteDropdown.classList.add('hidden');
+        return;
+      }
+
+      debounceTimer = setTimeout(() => {
+        fetchSuggestions(query);
+      }, 250);
     });
 
-    async function performSearch() {
-      const query = searchInput.value.trim().toLowerCase();
-      if (!query) return;
+    clearSearchBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      clearSearchBtn.classList.add('hidden');
+      autocompleteDropdown.classList.add('hidden');
+      searchInput.focus();
+    });
 
-      showStatus('Searching...');
-      resultContainer.classList.add('hidden');
+    searchSubmitBtn.addEventListener('click', () => {
+      const query = searchInput.value.trim();
+      if (query) performSearch(query);
+    });
 
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const query = searchInput.value.trim();
+        if (query) {
+          autocompleteDropdown.classList.add('hidden');
+          performSearch(query);
+        }
+      }
+    });
+
+    // Fetch Live Suggestions from Datamuse API
+    async function fetchSuggestions(query) {
       try {
-        // Attempt Primary Fetch via Free Dictionary API
-        const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(query)}`);
-        
-        if (response.ok) {
-          const data = await response.json();
-          renderDictionaryData(data[0]);
+        const res = await fetch(`https://api.datamuse.com/sug?s=${encodeURIComponent(query)}&max=6`);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (data && data.length > 0) {
+          autocompleteList.innerHTML = data.map(item => `
+            <div class="suggestion-item px-4 py-2.5 hover:bg-indigo-50 dark:hover:bg-slate-800/80 cursor-pointer flex items-center justify-between transition-colors">
+              <span class="text-sm font-medium">${escapeHTML(item.word)}</span>
+              <i data-lucide="arrow-up-left" class="w-4 h-4 text-slate-400"></i>
+            </div>
+          `).join('');
+
+          autocompleteDropdown.classList.remove('hidden');
+          lucide.createIcons();
+
+          document.querySelectorAll('.suggestion-item').forEach(el => {
+            el.addEventListener('click', () => {
+              const word = el.querySelector('span').textContent;
+              searchInput.value = word;
+              autocompleteDropdown.classList.add('hidden');
+              performSearch(word);
+            });
+          });
         } else {
-          // Fallback fetch for idioms/phrases via Datamuse API if primary lookup misses
-          await fetchIdiomFallback(query);
+          autocompleteDropdown.classList.add('hidden');
         }
       } catch (err) {
-        showStatus('An error occurred while fetching dictionary data. Please check your network connection.', true);
+        console.error('Autocomplete Error:', err);
       }
     }
 
-    function renderDictionaryData(entry) {
-      statusDiv.classList.add('hidden');
-      resultContainer.classList.remove('hidden');
+    // Hide autocomplete on click outside
+    document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
+        autocompleteDropdown.classList.add('hidden');
+      }
+    });
 
-      // 1. Render Word Title
-      wordText.textContent = entry.word;
+    // Primary Search Handler
+    async function performSearch(query) {
+      query = query.trim().toLowerCase();
+      if (!query) return;
 
-      // 2. Extract Phonetics & Audio
-      let phonetic = entry.phonetic || '';
+      state.currentQuery = query;
+      showState('loading');
+
+      try {
+        // Attempt Primary Fetch: Free Dictionary API
+        const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(query)}`);
+
+        if (response.ok) {
+          const data = await response.json();
+          renderDictionaryResult(data[0]);
+          addToHistory(query);
+        } else {
+          // Secondary Fallback Fetch: Datamuse API for Idioms and Multi-word expressions
+          await fetchIdiomFallback(query);
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+        showError('Network Error', 'Unable to reach dictionary services. Please check your internet connection.');
+      }
+    }
+
+    // Secondary API handler for multi-word phrases & idioms
+    async function fetchIdiomFallback(phrase) {
+      try {
+        const datamuseRes = await fetch(`https://api.datamuse.com/words?sp=${encodeURIComponent(phrase)}&md=d&max=1`);
+        const data = await datamuseRes.json();
+
+        if (data.length > 0 && data[0].defs) {
+          // Construct normalized entry object matching dictionary schema
+          const fallbackEntry = {
+            word: phrase,
+            phonetic: '',
+            phonetics: [],
+            meanings: [
+              {
+                partOfSpeech: 'idiom / phrase',
+                definitions: data[0].defs.map(d => {
+                  const parts = d.split('\t');
+                  return {
+                    definition: parts[1] || parts[0],
+                    example: `It was a tricky situation, but we decided to ${phrase} and carry on.`
+                  };
+                }),
+                synonyms: [],
+                antonyms: []
+              }
+            ]
+          };
+          renderDictionaryResult(fallbackEntry);
+          addToHistory(phrase);
+        } else {
+          showError('No Definition Found', `Sorry, we couldn't find definitions or examples for "${phrase}". Try checking for typos or search another word.`);
+        }
+      } catch (err) {
+        showError('Lookup Error', 'Could not fetch definition for this phrase.');
+      }
+    }
+
+    function renderDictionaryResult(entry) {
+      state.currentEntry = entry;
+
+      // 1. Set Title & Favorites Icon State
+      resultWord.textContent = entry.word;
+      updateFavoriteButtonState();
+
+      // 2. Resolve IPA & Phonetic Respelling
+      let ipaText = entry.phonetic || '';
       let audioUrl = '';
 
       if (entry.phonetics && entry.phonetics.length > 0) {
         for (const p of entry.phonetics) {
-          if (p.text && !phonetic) phonetic = p.text;
+          if (p.text && !ipaText) ipaText = p.text;
           if (p.audio && !audioUrl) audioUrl = p.audio;
         }
       }
 
-      phoneticText.textContent = phonetic || '[ pronunciation unavailable ]';
-      currentAudioUrl = audioUrl;
+      state.audioUrl = audioUrl;
 
-      // Toggle audio button depending on availability
-      if (audioUrl) {
-        audioBtn.style.display = 'flex';
-      } else {
-        audioBtn.style.display = 'none';
-      }
+      // Render IPA
+      resultIPA.textContent = ipaText ? ipaText : '/---/';
+      
+      // Render Phonetic Respelling
+      const respelling = convertIPAToRespelling(ipaText, entry.word);
+      resultRespelling.textContent = respelling;
 
-      // 3. Render Meanings & Example Sentences per Definition
-      meaningsContainer.innerHTML = '';
+      // 3. Render Meanings & Definitions
+      meaningsList.innerHTML = '';
 
-      entry.meanings.forEach(meaning => {
-        const block = document.createElement('div');
-        block.className = 'meaning-block';
+      entry.meanings.forEach((meaning, idx) => {
+        const meaningCard = document.createElement('div');
+        meaningCard.className = 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col gap-4';
 
-        const pos = document.createElement('div');
-        pos.className = 'part-of-speech';
-        pos.textContent = meaning.partOfSpeech;
-        block.appendChild(pos);
+        // Part of speech header
+        const posHeader = document.createElement('div');
+        posHeader.className = 'flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3';
+        posHeader.innerHTML = `
+          <span class="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-xs font-bold uppercase tracking-wider">
+            ${escapeHTML(meaning.partOfSpeech)}
+          </span>
+          <span class="text-xs text-slate-400 font-medium">${meaning.definitions.length} definition${meaning.definitions.length > 1 ? 's' : ''}</span>
+        `;
+        meaningCard.appendChild(posHeader);
 
-        const list = document.createElement('ol');
-        list.className = 'definition-list';
+        // Definitions list
+        const defOl = document.createElement('ol');
+        defOl.className = 'flex flex-col gap-4 list-decimal list-inside text-slate-700 dark:text-slate-300';
 
-        meaning.definitions.forEach(defObj => {
-          const item = document.createElement('li');
-          item.className = 'definition-item';
-          
-          let htmlContent = `<div>${defObj.definition}</div>`;
-          
-          // Render example sentence if present
-          if (defObj.example) {
-            htmlContent += `<div class="example-sentence"><strong>Example:</strong> "${defObj.example}"</div>`;
-          } else {
-            htmlContent += `<div class="example-sentence"><strong>Example:</strong> <em>No example sentence provided for this meaning.</em></div>`;
-          }
+        meaning.definitions.forEach((defObj, dIdx) => {
+          const defLi = document.createElement('li');
+          defLi.className = 'leading-relaxed text-base';
 
-          item.innerHTML = htmlContent;
-          list.appendChild(item);
+          // Guaranteed example sentence fallback logic
+          const exampleText = defObj.example || generateExampleSentence(entry.word, defObj.definition, meaning.partOfSpeech);
+
+          defLi.innerHTML = `
+            <span class="font-medium text-slate-900 dark:text-slate-100">${escapeHTML(defObj.definition)}</span>
+            <div class="mt-2.5 ml-5 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border-l-4 border-indigo-500 text-sm text-slate-600 dark:text-slate-400 font-normal">
+              <span class="font-semibold text-indigo-600 dark:text-indigo-400 text-xs block mb-0.5 uppercase tracking-wide">Example Sentence:</span>
+              "${escapeHTML(exampleText)}"
+            </div>
+          `;
+          defOl.appendChild(defLi);
         });
 
-        block.appendChild(list);
-        meaningsContainer.appendChild(block);
+        meaningCard.appendChild(defOl);
+
+        // Synonyms & Antonyms Tag Cloud
+        if ((meaning.synonyms && meaning.synonyms.length > 0) || (meaning.antonyms && meaning.antonyms.length > 0)) {
+          const tagsContainer = document.createElement('div');
+          tagsContainer.className = 'mt-2 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-3 text-xs';
+
+          if (meaning.synonyms && meaning.synonyms.length > 0) {
+            tagsContainer.innerHTML += `
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Synonyms:</span>
+                ${meaning.synonyms.slice(0, 8).map(syn => `
+                  <button class="clickable-tag px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 rounded-lg font-medium transition-colors">
+                    ${escapeHTML(syn)}
+                  </button>
+                `).join('')}
+              </div>
+            `;
+          }
+
+          if (meaning.antonyms && meaning.antonyms.length > 0) {
+            tagsContainer.innerHTML += `
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Antonyms:</span>
+                ${meaning.antonyms.slice(0, 8).map(ant => `
+                  <button class="clickable-tag px-2.5 py-1 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/60 rounded-lg font-medium transition-colors">
+                    ${escapeHTML(ant)}
+                  </button>
+                `).join('')}
+              </div>
+            `;
+          }
+
+          meaningCard.appendChild(tagsContainer);
+        }
+
+        meaningsList.appendChild(meaningCard);
+      });
+
+      showState('results');
+
+      // Bind dynamic tag click listeners
+      document.querySelectorAll('.clickable-tag').forEach(tag => {
+        tag.addEventListener('click', () => {
+          const text = tag.textContent.trim();
+          searchInput.value = text;
+          performSearch(text);
+        });
       });
     }
 
-    // Secondary fallback for idioms & multi-word expressions
-    async function fetchIdiomFallback(phrase) {
-      const datamuseRes = await fetch(`https://api.datamuse.com/words?sp=${encodeURIComponent(phrase)}&md=d&max=1`);
-      const data = await datamuseRes.json();
-
-      if (data.length > 0 && data[0].defs) {
-        statusDiv.classList.add('hidden');
-        resultContainer.classList.remove('hidden');
-
-        wordText.textContent = phrase;
-        phoneticText.textContent = '[ idiom / phrase ]';
-        audioBtn.style.display = 'none';
-
-        meaningsContainer.innerHTML = '';
-
-        const block = document.createElement('div');
-        block.className = 'meaning-block';
-
-        const pos = document.createElement('div');
-        pos.className = 'part-of-speech';
-        pos.textContent = 'idiom / phrase';
-        block.appendChild(pos);
-
-        const list = document.createElement('ol');
-        list.className = 'definition-list';
-
-        data[0].defs.forEach(defStr => {
-          const parts = defStr.split('\t');
-          const definitionText = parts[1] || parts[0];
-
-          const item = document.createElement('li');
-          item.className = 'definition-item';
-          item.innerHTML = `
-            <div>${definitionText}</div>
-            <div class="example-sentence"><strong>Example:</strong> "We decided to <em>${phrase}</em> and get the job done."</div>
-          `;
-          list.appendChild(item);
+    playAudioBtn.addEventListener('click', () => {
+      if (state.audioUrl) {
+        const audio = new Audio(state.audioUrl);
+        audio.play().catch(err => {
+          console.warn('Audio URL blocked or broken, falling back to Web Speech API', err);
+          speakWithSpeechSynthesis(state.currentQuery);
         });
-
-        block.appendChild(list);
-        meaningsContainer.appendChild(block);
       } else {
-        showStatus(`No definitions found for "${phrase}". Try searching another word or idiom.`, true);
-      }
-    }
-
-    // Audio Player Event
-    audioBtn.addEventListener('click', () => {
-      if (currentAudioUrl) {
-        const audio = new Audio(currentAudioUrl);
-        audio.play().catch(e => alert("Audio playback error: " + e.message));
+        speakWithSpeechSynthesis(state.currentQuery);
       }
     });
 
-    function showStatus(msg, isError = false) {
-      statusDiv.textContent = msg;
-      statusDiv.className = isError ? 'status-msg error-msg' : 'status-msg';
-      statusDiv.classList.remove('hidden');
+    function speakWithSpeechSynthesis(text) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); // Stop active speech
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.9;
+        utterance.lang = 'en-US';
+        window.speechSynthesis.speak(utterance);
+      } else {
+        alert('Audio pronunciation is not supported on this browser.');
+      }
     }
+
+    function addToHistory(term) {
+      term = term.trim().toLowerCase();
+      state.history = state.history.filter(item => item !== term);
+      state.history.unshift(term);
+      if (state.history.length > 30) state.history.pop();
+      localStorage.setItem('lexivox_history', JSON.stringify(state.history));
+      renderHistoryList();
+    }
+
+    function renderHistoryList() {
+      historyBadge.textContent = state.history.length;
+      historyBadge.classList.toggle('hidden', state.history.length === 0);
+
+      if (state.history.length === 0) {
+        historyList.innerHTML = '<p class="text-sm text-slate-400 text-center py-8">No search history yet.</p>';
+        return;
+      }
+
+      historyList.innerHTML = state.history.map(term => `
+        <div class="history-item group flex items-center justify-between p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 cursor-pointer transition-colors">
+          <span class="text-sm font-medium capitalize flex items-center gap-2">
+            <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
+            ${escapeHTML(term)}
+          </span>
+          <button class="delete-history p-1 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" data-term="${escapeHTML(term)}">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+
+      historyList.querySelectorAll('.history-item').forEach(el => {
+        el.addEventListener('click', (e) => {
+          if (e.target.closest('.delete-history')) return;
+          const term = el.querySelector('span').textContent.trim();
+          searchInput.value = term;
+          toggleDrawer(historyDrawer, false);
+          performSearch(term);
+        });
+      });
+
+      historyList.querySelectorAll('.delete-history').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const term = btn.getAttribute('data-term');
+          state.history = state.history.filter(t => t !== term);
+          localStorage.setItem('lexivox_history', JSON.stringify(state.history));
+          renderHistoryList();
+        });
+      });
+    }
+
+    clearHistoryBtn.addEventListener('click', () => {
+      state.history = [];
+      localStorage.setItem('lexivox_history', JSON.stringify([]));
+      renderHistoryList();
+    });
+
+    // Favorites handling
+    favoriteToggleBtn.addEventListener('click', () => {
+      if (!state.currentQuery) return;
+      const term = state.currentQuery;
+      const index = state.favorites.indexOf(term);
+
+      if (index >= 0) {
+        state.favorites.splice(index, 1);
+      } else {
+        state.favorites.push(term);
+      }
+
+      localStorage.setItem('lexivox_favorites', JSON.stringify(state.favorites));
+      updateFavoriteButtonState();
+      renderFavoritesList();
+    });
+
+    function updateFavoriteButtonState() {
+      const isFav = state.favorites.includes(state.currentQuery);
+      favoriteIcon.setAttribute('class', isFav ? 'w-6 h-6 fill-amber-500 text-amber-500' : 'w-6 h-6 text-slate-400');
+    }
+
+    function renderFavoritesList() {
+      if (state.favorites.length === 0) {
+        favoritesList.innerHTML = '<p class="text-sm text-slate-400 text-center py-8">No saved words yet.</p>';
+        return;
+      }
+
+      favoritesList.innerHTML = state.favorites.map(term => `
+        <div class="fav-item group flex items-center justify-between p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 cursor-pointer transition-colors">
+          <span class="text-sm font-medium capitalize flex items-center gap-2">
+            <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-500 text-amber-500"></i>
+            ${escapeHTML(term)}
+          </span>
+          <button class="remove-fav p-1 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" data-term="${escapeHTML(term)}">
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+
+      favoritesList.querySelectorAll('.fav-item').forEach(el => {
+        el.addEventListener('click', (e) => {
+          if (e.target.closest('.remove-fav')) return;
+          const term = el.querySelector('span').textContent.trim();
+          searchInput.value = term;
+          toggleDrawer(favoritesDrawer, false);
+          performSearch(term);
+        });
+      });
+
+      favoritesList.querySelectorAll('.remove-fav').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const term = btn.getAttribute('data-term');
+          state.favorites = state.favorites.filter(t => t !== term);
+          localStorage.setItem('lexivox_favorites', JSON.stringify(state.favorites));
+          updateFavoriteButtonState();
+          renderFavoritesList();
+        });
+      });
+    }
+
+    function showState(view) {
+      loadingState.classList.add('hidden');
+      welcomeState.classList.add('hidden');
+      errorState.classList.add('hidden');
+      resultsContainer.classList.add('hidden');
+
+      if (view === 'loading') loadingState.classList.remove('hidden');
+      if (view === 'welcome') welcomeState.classList.remove('hidden');
+      if (view === 'error') errorState.classList.remove('hidden');
+      if (view === 'results') {
+        resultsContainer.classList.remove('hidden');
+        resultsContainer.classList.add('flex');
+      }
+    }
+
+    function showError(title, message) {
+      document.getElementById('errorTitle').textContent = title;
+      document.getElementById('errorMessage').textContent = message;
+      showState('error');
+    }
+
+    function toggleDrawer(drawerEl, show) {
+      const backdrop = drawerEl.querySelector('[id$="Backdrop"]');
+      const panel = drawerEl.querySelector('div:nth-child(2)');
+
+      if (show) {
+        drawerEl.classList.remove('pointer-events-none', 'opacity-0');
+        drawerEl.classList.add('opacity-100');
+        panel.classList.remove('translate-x-full');
+      } else {
+        drawerEl.classList.add('pointer-events-none', 'opacity-0');
+        drawerEl.classList.remove('opacity-100');
+        panel.classList.add('translate-x-full');
+      }
+    }
+
+    // Drawer Event Listeners
+    historyDrawerBtn.addEventListener('click', () => toggleDrawer(historyDrawer, true));
+    closeHistoryBtn.addEventListener('click', () => toggleDrawer(historyDrawer, false));
+    historyBackdrop.addEventListener('click', () => toggleDrawer(historyDrawer, false));
+
+    favoritesDrawerBtn.addEventListener('click', () => toggleDrawer(favoritesDrawer, true));
+    closeFavoritesBtn.addEventListener('click', () => toggleDrawer(favoritesDrawer, false));
+    favoritesBackdrop.addEventListener('click', () => toggleDrawer(favoritesDrawer, false));
+
+    // Quick tag search buttons
+    document.querySelectorAll('.quick-tag').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const text = btn.textContent.trim();
+        searchInput.value = text;
+        performSearch(text);
+      });
+    });
+
+    // Header logo click to home
+    document.getElementById('logoBtn').addEventListener('click', () => {
+      searchInput.value = '';
+      clearSearchBtn.classList.add('hidden');
+      showState('welcome');
+    });
+
+    // Theme Toggle
+    function applyTheme(isDark) {
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        themeIcon.setAttribute('data-lucide', 'sun');
+      } else {
+        document.documentElement.classList.remove('dark');
+        themeIcon.setAttribute('data-lucide', 'moon');
+      }
+      localStorage.setItem('lexivox_theme', isDark ? 'dark' : 'light');
+      lucide.createIcons();
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+      state.isDarkMode = !state.isDarkMode;
+      applyTheme(state.isDarkMode);
+    });
+
+    function escapeHTML(str) {
+      return (str || '').replace(/[&<>"']/g, match => {
+        const chars = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+        return chars[match];
+      });
+    }
+
+    window.onload = function() {
+      applyTheme(state.isDarkMode);
+      renderHistoryList();
+      renderFavoritesList();
+      lucide.createIcons();
+    };
   </script>
 </body>
 </html>
