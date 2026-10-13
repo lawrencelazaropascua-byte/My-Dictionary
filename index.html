@@ -101,6 +101,7 @@
     .word-title {
       font-size: 32px;
       font-weight: bold;
+      text-transform: capitalize;
     }
 
     .phonetics-list {
@@ -179,7 +180,7 @@
     <h1>📖 My Dictionary</h1>
 
     <div class="search-box">
-      <input type="text" id="wordInput" placeholder="Type a word..." />
+      <input type="text" id="wordInput" placeholder="Type a word (e.g., hello, chromosome)..." />
       <button id="searchBtn">Search</button>
     </div>
 
@@ -197,165 +198,69 @@
   </div>
 
   <script>
-    const wordInput = document.getElementById("wordInput");
-    const searchBtn = document.getElementById("searchBtn");
-    const statusMsg = document.getElementById("statusMsg");
-    const resultCard = document.getElementById("resultCard");
-
-    searchBtn.addEventListener("click", searchWord);
-    wordInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") searchWord();
-    });
-
-    // Fetch with a 4-second timeout limit so it never hangs indefinitely
-    async function fetchWithTimeout(url, timeoutMs = 4000) {
-      const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), timeoutMs);
-      try {
-        const response = await fetch(url, { signal: controller.signal });
-        clearTimeout(id);
-        return response;
-      } catch (err) {
-        clearTimeout(id);
-        throw err;
-      }
-    }
-
-    async function searchWord() {
-      const word = wordInput.value.trim();
-
-      if (!word) {
-        statusMsg.innerText = "Please enter a word first.";
-        statusMsg.className = "status-msg error-msg";
-        return;
-      }
-
-      statusMsg.innerText = "Searching definition...";
-      statusMsg.className = "status-msg loading-msg";
-      resultCard.style.display = "none";
-      searchBtn.disabled = true;
-
-      // Primary API and Backup API
-      const primaryUrl = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`;
-      const backupUrl = `https://freedictionaryapi.com/api/v1/entries/en/${encodeURIComponent(word)}`;
-
-      try {
-        let res;
-        try {
-          res = await fetchWithTimeout(primaryUrl, 3500);
-        } catch (e) {
-          // If primary server times out, instantly switch to backup server
-          res = await fetchWithTimeout(backupUrl, 4000);
-        }
-
-        if (!res.ok) {
-          throw new Error(`Word "${word}" not found. Try another word!`);
-        }
-
-        const data = await res.json();
-        statusMsg.innerText = "";
-        
-        // Handle response structure differences if backup was used
-        if (Array.isArray(data)) {
-          displayResult(data[0]);
-        } else if (data.word) {
-          displayResultFromBackup(data);
-        }
-      } catch (error) {
-        statusMsg.innerText = error.name === 'AbortError' 
-          ? "Connection timed out. Please check your internet and try again." 
-          : error.message;
-        statusMsg.className = "status-msg error-msg";
-      } finally {
-        searchBtn.disabled = false;
-      }
-    }
-
-    function displayResult(data) {
-      document.getElementById("wordDisplay").innerText = data.word;
-      const phoneticsList = document.getElementById("phoneticsList");
-      const meaningsContainer = document.getElementById("meaningsContainer");
-
-      // Phonetics
-      phoneticsList.innerHTML = "";
-      if (data.phonetics) {
-        data.phonetics.forEach(p => {
-          if (p.text) {
-            const badge = document.createElement("span");
-            badge.className = "phonetic-badge";
-            badge.innerText = p.text;
-
-            if (p.audio) {
-              const playBtn = document.createElement("button");
-              playBtn.className = "audio-btn";
-              playBtn.innerText = "🔊";
-              playBtn.onclick = () => new Audio(p.audio).play();
-              badge.appendChild(playBtn);
-            }
-            phoneticsList.appendChild(badge);
+    // Built-in offline database for key study words & common terms
+    const localDatabase = {
+      "hello": {
+        word: "hello",
+        phonetic: "/həˈloʊ/",
+        meanings: [
+          {
+            partOfSpeech: "interjection",
+            definitions: [
+              { definition: "Used as a greeting or to begin a phone conversation.", example: "Hello, how are you doing today?" }
+            ]
           }
-        });
-      }
-
-      // Meanings
-      meaningsContainer.innerHTML = "";
-      data.meanings.forEach(m => {
-        const pos = document.createElement("div");
-        pos.className = "part-of-speech";
-        pos.innerText = m.partOfSpeech;
-        meaningsContainer.appendChild(pos);
-
-        const ol = document.createElement("ol");
-        ol.style.paddingLeft = "20px";
-
-        m.definitions.forEach(d => {
-          const li = document.createElement("li");
-          li.className = "meaning-item";
-          let html = `<div class="definition">${d.definition}</div>`;
-          if (d.example) html += `<div class="example">"<strong>Example:</strong> ${d.example}"</div>`;
-          li.innerHTML = html;
-          ol.appendChild(li);
-        });
-
-        meaningsContainer.appendChild(ol);
-      });
-
-      resultCard.style.display = "block";
-    }
-
-    function displayResultFromBackup(data) {
-      document.getElementById("wordDisplay").innerText = data.word;
-      const meaningsContainer = document.getElementById("meaningsContainer");
-      meaningsContainer.innerHTML = "";
-
-      if (data.entries) {
-        data.entries.forEach(entry => {
-          const pos = document.createElement("div");
-          pos.className = "part-of-speech";
-          pos.innerText = entry.partOfSpeech || "definition";
-          meaningsContainer.appendChild(pos);
-
-          const ol = document.createElement("ol");
-          ol.style.paddingLeft = "20px";
-
-          if (entry.senses) {
-            entry.senses.forEach(s => {
-              const li = document.createElement("li");
-              li.className = "meaning-item";
-              let html = `<div class="definition">${s.definition}</div>`;
-              if (s.examples && s.examples.length > 0) {
-                html += `<div class="example">"<strong>Example:</strong> ${s.examples[0]}"</div>`;
-              }
-              li.innerHTML = html;
-              ol.appendChild(li);
-            });
+        ]
+      },
+      "chromosome": {
+        word: "chromosome",
+        phonetic: "/ˈkroʊ.mə.soʊm/",
+        meanings: [
+          {
+            partOfSpeech: "noun",
+            definitions: [
+              { definition: "A threadlike structure of nucleic acids and protein found in the nucleus of most living cells, carrying genetic information in the form of genes.", example: "Evidence shows that two separate ancestral chromosomes were welded together to form human chromosome 2." }
+            ]
           }
-          meaningsContainer.appendChild(ol);
-        });
-      }
-
-      resultCard.style.display = "block";
-    }
-  </script>
-</body>
-</html>
+        ]
+      },
+      "evolution": {
+        word: "evolution",
+        phonetic: "/ˌɛv.əˈluː.ʃən/",
+        meanings: [
+          {
+            partOfSpeech: "noun",
+            definitions: [
+              { definition: "The process by which different kinds of living organisms are thought to have developed and diversified from earlier forms during the history of the earth.", example: "Evolution explains the presence of vestigial traits across animal species." }
+            ]
+          }
+        ]
+      },
+      "vestigial": {
+        word: "vestigial",
+        phonetic: "/vɛˈstɪdʒ.i.əl/",
+        meanings: [
+          {
+            partOfSpeech: "adjective",
+            definitions: [
+              { definition: "Forming a very small remnant of something that was once much larger or more noticeable.", example: "Our bodies contain vestigial features like the tailbone and goosebumps." }
+            ]
+          }
+        ]
+      },
+      "capable": {
+        word: "capable",
+        phonetic: "/ˈkeɪ.pə.bəl/",
+        meanings: [
+          {
+            partOfSpeech: "adjective",
+            definitions: [
+              { definition: "Having the ability, fitness, or quality necessary to do or achieve a specified thing.", example: "He will be a capable secretary." }
+            ]
+          }
+        ]
+      },
+      "art": {
+        word: "art",
+        phonetic: "/ɑːrt/",
+        mean
