@@ -114,21 +114,13 @@
     .phonetic-badge {
       background: #eef5fc;
       color: var(--primary-color);
-      padding: 4px 10px;
+      padding: 6px 12px;
       border-radius: 6px;
-      font-size: 14px;
-      font-weight: 500;
+      font-size: 15px;
+      font-weight: 600;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-    }
-
-    .audio-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 14px;
-      padding: 0;
     }
 
     .part-of-speech {
@@ -180,7 +172,7 @@
     <h1>📖 My Dictionary</h1>
 
     <div class="search-box">
-      <input type="text" id="wordInput" placeholder="Type a word (e.g., hello, chromosome)..." />
+      <input type="text" id="wordInput" placeholder="Type a word (e.g., secretary, typical)..." />
       <button id="searchBtn">Search</button>
     </div>
 
@@ -198,69 +190,160 @@
   </div>
 
   <script>
-    // Built-in offline database for key study words & common terms
+    // Enhanced local dictionary database with readable phonetic respellings
     const localDatabase = {
-      "hello": {
-        word: "hello",
-        phonetic: "/həˈloʊ/",
+      "secretary": {
+        word: "secretary",
+        phonetic: "[sek-ri-ter-ee]",
         meanings: [
           {
-            partOfSpeech: "interjection",
+            partOfSpeech: "noun",
             definitions: [
-              { definition: "Used as a greeting or to begin a phone conversation.", example: "Hello, how are you doing today?" }
+              { definition: "A person employed in an office to assist with correspondence, keep records, and make arrangements.", example: "He will be a capable secretary." }
+            ]
+          }
+        ]
+      },
+      "typical": {
+        word: "typical",
+        phonetic: "[tip-i-kuhl]",
+        meanings: [
+          {
+            partOfSpeech: "adjective",
+            definitions: [
+              { definition: "Having the distinctive qualities of a particular type of person or thing.", example: "This is a typical day in the office." }
+            ]
+          }
+        ]
+      },
+      "landlord": {
+        word: "landlord",
+        phonetic: "[land-lawrd]",
+        meanings: [
+          {
+            partOfSpeech: "noun",
+            definitions: [
+              { definition: "A person who rents out land, a building, or apartment to a tenant.", example: "The landlord fixed the kitchen door." }
             ]
           }
         ]
       },
       "chromosome": {
         word: "chromosome",
-        phonetic: "/ˈkroʊ.mə.soʊm/",
+        phonetic: "[kroʊ-muh-soʊm]",
         meanings: [
           {
             partOfSpeech: "noun",
             definitions: [
-              { definition: "A threadlike structure of nucleic acids and protein found in the nucleus of most living cells, carrying genetic information in the form of genes.", example: "Evidence shows that two separate ancestral chromosomes were welded together to form human chromosome 2." }
-            ]
-          }
-        ]
-      },
-      "evolution": {
-        word: "evolution",
-        phonetic: "/ˌɛv.əˈluː.ʃən/",
-        meanings: [
-          {
-            partOfSpeech: "noun",
-            definitions: [
-              { definition: "The process by which different kinds of living organisms are thought to have developed and diversified from earlier forms during the history of the earth.", example: "Evolution explains the presence of vestigial traits across animal species." }
+              { definition: "A threadlike structure carrying genetic information in the form of genes.", example: "Human chromosome 2 was formed by welded ancestral chromosomes." }
             ]
           }
         ]
       },
       "vestigial": {
         word: "vestigial",
-        phonetic: "/vɛˈstɪdʒ.i.əl/",
+        phonetic: "[veh-stij-ee-uhl]",
         meanings: [
           {
             partOfSpeech: "adjective",
             definitions: [
-              { definition: "Forming a very small remnant of something that was once much larger or more noticeable.", example: "Our bodies contain vestigial features like the tailbone and goosebumps." }
+              { definition: "Forming a small remnant of something that was once much larger.", example: "Our bodies contain vestigial features like the tailbone." }
             ]
           }
         ]
       },
-      "capable": {
-        word: "capable",
-        phonetic: "/ˈkeɪ.pə.bəl/",
+      "school": {
+        word: "school",
+        phonetic: "[skuːl]",
         meanings: [
           {
-            partOfSpeech: "adjective",
+            partOfSpeech: "noun",
             definitions: [
-              { definition: "Having the ability, fitness, or quality necessary to do or achieve a specified thing.", example: "He will be a capable secretary." }
+              { definition: "An institution for educating children or adults.", example: "Have Debbie and Danny left for school now?" }
             ]
           }
         ]
-      },
-      "art": {
-        word: "art",
-        phonetic: "/ɑːrt/",
-        mean
+      }
+    };
+
+    const wordInput = document.getElementById("wordInput");
+    const searchBtn = document.getElementById("searchBtn");
+    const statusMsg = document.getElementById("statusMsg");
+    const resultCard = document.getElementById("resultCard");
+
+    searchBtn.addEventListener("click", searchWord);
+    wordInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") searchWord();
+    });
+
+    async function searchWord() {
+      const rawWord = wordInput.value.trim();
+      const word = rawWord.toLowerCase();
+
+      if (!word) {
+        statusMsg.innerText = "Please enter a word first.";
+        statusMsg.className = "status-msg error-msg";
+        return;
+      }
+
+      statusMsg.innerText = "Searching definition...";
+      statusMsg.className = "status-msg loading-msg";
+      resultCard.style.display = "none";
+      searchBtn.disabled = true;
+
+      // Check local database first for instant, accurate phonetic respellings
+      setTimeout(() => {
+        if (localDatabase[word]) {
+          statusMsg.innerText = "";
+          displayLocalResult(localDatabase[word]);
+        } else {
+          statusMsg.innerText = `Word "${rawWord}" not found. Try searching for "secretary", "typical", "landlord", or "vestigial".`;
+          statusMsg.className = "status-msg error-msg";
+        }
+        searchBtn.disabled = false;
+      }, 300);
+    }
+
+    function displayLocalResult(data) {
+      document.getElementById("wordDisplay").innerText = data.word;
+      const phoneticsList = document.getElementById("phoneticsList");
+      const meaningsContainer = document.getElementById("meaningsContainer");
+
+      phoneticsList.innerHTML = "";
+      if (data.phonetic) {
+        const badge = document.createElement("span");
+        badge.className = "phonetic-badge";
+        badge.innerText = `🔊 ${data.phonetic}`;
+        phoneticsList.appendChild(badge);
+      }
+
+      renderMeanings(data.meanings, meaningsContainer);
+      resultCard.style.display = "block";
+    }
+
+    function renderMeanings(meanings, container) {
+      container.innerHTML = "";
+      meanings.forEach(m => {
+        const pos = document.createElement("div");
+        pos.className = "part-of-speech";
+        pos.innerText = m.partOfSpeech;
+        container.appendChild(pos);
+
+        const ol = document.createElement("ol");
+        ol.style.paddingLeft = "20px";
+
+        m.definitions.forEach(d => {
+          const li = document.createElement("li");
+          li.className = "meaning-item";
+          let html = `<div class="definition">${d.definition}</div>`;
+          if (d.example) html += `<div class="example">"<strong>Example:</strong> ${d.example}"</div>`;
+          li.innerHTML = html;
+          ol.appendChild(li);
+        });
+
+        container.appendChild(ol);
+      });
+    }
+  </script>
+</body>
+</html>
