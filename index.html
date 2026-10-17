@@ -1,368 +1,607 @@
 <!DOCTYPE html>
-<html lang="en" class="light">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Online Dictionary & Idiom Finder</title>
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              50: '#eef2ff',
-              100: '#e0e7ff',
-              500: '#6366f1',
-              600: '#4f46e5',
-              700: '#4338ca',
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grammar & Sentence Checker</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        }
+                    }
+                }
             }
-          }
         }
-      }
-    }
-  </script>
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200 flex flex-col justify-between">
+<body class="text-slate-800 min-h-screen flex flex-col justify-between">
 
-  <div class="max-w-3xl w-full mx-auto px-4 py-8 flex-grow">
-    <!-- Header -->
-    <header class="flex justify-between items-center mb-8">
-      <div>
-        <h1 class="text-3xl font-extrabold text-brand-600 dark:text-brand-500 tracking-tight">LexiSearch</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Search words, phrases & idioms with phonetics and examples.</p>
-      </div>
-      <button id="themeToggle" class="p-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:scale-105 transition">
-        🌙
-      </button>
+    <!-- Header Navigation -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-md shadow-teal-600/20">
+                    <i class="fa-solid font-bold fa-spell-check text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-900 leading-tight">GrammarPro</h1>
+                    <p class="text-xs text-slate-500">Smart AI Sentence & Style Assistant</p>
+                </div>
+            </div>
+
+            <!-- Tab Switcher -->
+            <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+                <button id="navCheckBtn" onclick="switchTab('check')" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all shadow-sm bg-white text-teal-700">
+                    <i class="fa-solid fa-pen-to-square mr-1.5"></i> Checker
+                </button>
+                <button id="navQuizBtn" onclick="switchTab('quiz')" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-slate-600 hover:text-slate-900">
+                    <i class="fa-solid fa-graduation-cap mr-1.5"></i> Practice Quiz
+                </button>
+            </div>
+        </div>
     </header>
 
-    <!-- Search Section -->
-    <div class="relative mb-6">
-      <div class="flex gap-2">
-        <div class="relative flex-grow">
-          <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">🔍</span>
-          <input 
-            type="text" 
-            id="searchInput" 
-            placeholder="Type a word or idiom (e.g. bite the bullet)..." 
-            class="w-full pl-11 pr-10 py-3.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl focus:border-brand-500 focus:outline-none text-lg shadow-sm transition"
-            autocomplete="off"
-          />
-          <button id="clearBtn" class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 hidden">✕</button>
-        </div>
-        <button id="searchBtn" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold px-6 py-3.5 rounded-2xl shadow-md transition active:scale-95">
-          Search
-        </button>
-      </div>
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
 
-      <!-- Autocomplete Dropdown -->
-      <div id="autocompleteList" class="absolute z-20 left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl hidden overflow-hidden max-h-60 overflow-y-auto"></div>
-    </div>
+        <!-- ================= CHECKER TAB ================= -->
+        <div id="checkerTab" class="space-y-6">
 
-    <!-- Quick Suggestions -->
-    <div class="flex flex-wrap items-center gap-2 mb-8 text-sm">
-      <span class="text-slate-400 font-medium">✨ Try searching:</span>
-      <button class="quick-tag px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full hover:border-brand-500 transition">convenient</button>
-      <button class="quick-tag px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full hover:border-brand-500 transition">bite the bullet</button>
-      <button class="quick-tag px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full hover:border-brand-500 transition">serendipity</button>
-      <button class="quick-tag px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full hover:border-brand-500 transition">break a leg</button>
-    </div>
+            <!-- Input & Actions Section -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/50 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center space-x-2 text-slate-700 font-semibold text-sm">
+                        <i class="fa-solid fa-align-left text-teal-600"></i>
+                        <span>Enter or paste your text</span>
+                    </div>
+                    <div class="flex items-center space-x-2 text-xs text-slate-500">
+                        <span id="charCount">0 characters</span>
+                        <span>•</span>
+                        <span id="wordCount">0 words</span>
+                        <button onclick="clearInput()" class="ml-2 text-slate-400 hover:text-rose-600 transition-colors p-1" title="Clear text">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
 
-    <!-- Status / Loading Area -->
-    <div id="statusArea" class="hidden text-center py-12">
-      <div id="spinner" class="inline-block w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-      <p id="statusText" class="text-slate-500 dark:text-slate-400 font-medium"></p>
-    </div>
+                <div class="p-4 sm:p-5">
+                    <textarea id="grammarInput" rows="5" placeholder="Type or paste sentences here (e.g., 'Asian peoples like themselves to be a doctor. Being an optician is also same.')" class="w-full border-0 focus:ring-0 text-slate-700 text-base sm:text-lg placeholder-slate-400 resize-y custom-scrollbar min-h-[140px] focus:outline-none"></textarea>
+                </div>
 
-    <!-- Results Card -->
-    <main id="resultContainer" class="space-y-6 hidden">
-      <!-- Word Main Header -->
-      <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex justify-between items-start">
-        <div>
-          <h2 id="wordTitle" class="text-3xl font-bold capitalize tracking-tight">---</h2>
-          <div class="flex items-center gap-3 mt-2">
-            <span id="phoneticIPA" class="text-brand-600 dark:text-brand-400 font-medium text-lg">---</span>
-            <span id="phoneticRespelling" class="text-slate-500 dark:text-slate-400 text-sm bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-lg">---</span>
-          </div>
-        </div>
-        <button id="audioBtn" class="w-12 h-12 rounded-full bg-brand-50 dark:bg-slate-700 text-brand-600 dark:text-brand-400 flex items-center justify-center text-xl hover:scale-110 transition shadow-inner" title="Pronounce">
-          🔊
-        </button>
-      </div>
+                <!-- Action Toolbar -->
+                <div class="px-4 py-3 sm:px-5 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex space-x-2">
+                        <button onclick="loadSampleText()" class="px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 hover:text-slate-800 transition-all shadow-sm">
+                            <i class="fa-solid fa-lightbulb text-amber-500 mr-1"></i> Try Sample Text
+                        </button>
+                    </div>
 
-      <!-- Meanings Container -->
-      <div id="meaningsWrapper" class="space-y-4"></div>
-    </main>
-  </div>
-
-  <script>
-    const searchInput = document.getElementById('searchInput');
-    const searchBtn = document.getElementById('searchBtn');
-    const clearBtn = document.getElementById('clearBtn');
-    const autocompleteList = document.getElementById('autocompleteList');
-    const statusArea = document.getElementById('statusArea');
-    const spinner = document.getElementById('spinner');
-    const statusText = document.getElementById('statusText');
-    const resultContainer = document.getElementById('resultContainer');
-    
-    const wordTitle = document.getElementById('wordTitle');
-    const phoneticIPA = document.getElementById('phoneticIPA');
-    const phoneticRespelling = document.getElementById('phoneticRespelling');
-    const audioBtn = document.getElementById('audioBtn');
-    const meaningsWrapper = document.getElementById('meaningsWrapper');
-    const themeToggle = document.getElementById('themeToggle');
-
-    let currentAudioUrl = '';
-
-    // Theme Switcher
-    themeToggle.addEventListener('click', () => {
-      const html = document.documentElement;
-      if (html.classList.contains('dark')) {
-        html.classList.remove('dark');
-        themeToggle.textContent = '🌙';
-      } else {
-        html.classList.add('dark');
-        themeToggle.textContent = '☀️';
-      }
-    });
-
-    // Input Control & Clear Button
-    searchInput.addEventListener('input', (e) => {
-      const val = e.target.value.trim();
-      clearBtn.classList.toggle('hidden', val.length === 0);
-      if (val.length > 1) {
-        fetchAutocomplete(val);
-      } else {
-        autocompleteList.classList.add('hidden');
-      }
-    });
-
-    clearBtn.addEventListener('click', () => {
-      searchInput.value = '';
-      clearBtn.classList.add('hidden');
-      autocompleteList.classList.add('hidden');
-      searchInput.focus();
-    });
-
-    // Quick Tags
-    document.querySelectorAll('.quick-tag').forEach(tag => {
-      tag.addEventListener('click', () => {
-        searchInput.value = tag.textContent;
-        clearBtn.classList.remove('hidden');
-        autocompleteList.classList.add('hidden');
-        executeSearch(tag.textContent);
-      });
-    });
-
-    searchBtn.addEventListener('click', () => {
-      const query = searchInput.value.trim();
-      if (query) {
-        autocompleteList.classList.add('hidden');
-        executeSearch(query);
-      }
-    });
-
-    searchInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        const query = searchInput.value.trim();
-        if (query) {
-          autocompleteList.classList.add('hidden');
-          executeSearch(query);
-        }
-      }
-    });
-
-    // Autocomplete using Datamuse
-    async function fetchAutocomplete(query) {
-      try {
-        const res = await fetch(`https://api.datamuse.com/sug?s=${encodeURIComponent(query)}&max=5`);
-        const data = await res.json();
-        if (data.length > 0) {
-          autocompleteList.innerHTML = data.map(item => `
-            <div class="autocomplete-item px-4 py-2.5 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer text-sm font-medium">
-              ${item.word}
+                    <button id="checkGrammarBtn" onclick="analyzeGrammar()" class="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-medium rounded-xl shadow-md shadow-teal-600/20 transition-all flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span id="btnText">Check Grammar</span>
+                    </button>
+                </div>
             </div>
-          `).join('');
-          autocompleteList.classList.remove('hidden');
 
-          document.querySelectorAll('.autocomplete-item').forEach(el => {
-            el.addEventListener('click', () => {
-              searchInput.value = el.textContent.trim();
-              autocompleteList.classList.add('hidden');
-              clearBtn.classList.remove('hidden');
-              executeSearch(searchInput.value);
-            });
-          });
-        } else {
-          autocompleteList.classList.add('hidden');
-        }
-      } catch (e) {
-        autocompleteList.classList.add('hidden');
-      }
-    }
+            <!-- Loading Spinner State -->
+            <div id="loadingState" class="hidden bg-white rounded-2xl p-8 border border-slate-200 text-center space-y-4 shadow-sm animate-pulse">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-teal-100 text-teal-600">
+                    <i class="fa-solid fa-circle-notch fa-spin text-2xl"></i>
+                </div>
+                <h3 class="text-base font-semibold text-slate-800">Analyzing your text with Gemini AI...</h3>
+                <p class="text-xs text-slate-500 max-w-md mx-auto">Checking grammar rules, punctuation, sentence agreement, and word choices for you.</p>
+            </div>
 
-    // Hide autocomplete on click outside
-    document.addEventListener('click', (e) => {
-      if (!searchInput.contains(e.target) && !autocompleteList.contains(e.target)) {
-        autocompleteList.classList.add('hidden');
-      }
-    });
+            <!-- Results Section -->
+            <div id="resultsContainer" class="hidden space-y-6">
 
-    // Main Search Handler
-    async function executeSearch(query) {
-      showLoading(`Searching for "${query}"...`);
-      resultContainer.classList.add('hidden');
+                <!-- Overall Score & Rewritten Summary Card -->
+                <div class="bg-gradient-to-br from-slate-900 to-teal-950 text-white rounded-2xl p-6 shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-teal-500/10 rounded-full blur-2xl"></div>
+                    
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                        <div class="flex items-center space-x-5">
+                            <!-- Circular Score -->
+                            <div class="relative w-20 h-20 flex-shrink-0 flex items-center justify-center bg-slate-800/80 rounded-2xl border border-slate-700 shadow-inner">
+                                <div id="scoreValue" class="text-2xl font-black text-teal-400">0%</div>
+                                <div class="absolute -bottom-2 px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold bg-teal-600 text-white rounded-full">Score</div>
+                            </div>
+                            
+                            <div class="space-y-1">
+                                <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                                    <span>Overall Analysis</span>
+                                    <span id="fluencyBadge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30">Native</span>
+                                </h2>
+                                <p id="overallSummary" class="text-sm text-slate-300 leading-relaxed max-w-2xl">Analysis complete.</p>
+                            </div>
+                        </div>
 
-      try {
-        // Format query for single-word vs multi-word phrase/idiom check
-        const cleanQuery = query.toLowerCase().trim();
-        const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanQuery)}`);
+                        <!-- Quick Copy Rewritten Text -->
+                        <div class="bg-slate-800/90 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between gap-3 min-w-[280px]">
+                            <div class="flex items-center justify-between text-xs text-slate-400">
+                                <span class="font-medium text-slate-300"><i class="fa-solid fa-circle-check text-teal-400 mr-1"></i> Full Corrected Version</span>
+                                <button onclick="copyCorrectedText()" class="hover:text-white transition-colors flex items-center gap-1 text-teal-400">
+                                    <i class="fa-regular fa-copy"></i> Copy
+                                </button>
+                            </div>
+                            <p id="fullCorrectedText" class="text-sm font-medium text-slate-100 bg-slate-900/60 p-2.5 rounded-lg border border-slate-800 break-words line-clamp-3"></p>
+                            <button onclick="applyAllCorrections()" class="w-full py-1.5 bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-arrow-up-from-bracket"></i> Replace Main Text
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-        if (response.ok) {
-          const data = await response.json();
-          renderDictionaryResult(data[0]);
-        } else {
-          // Fallback handling for popular idioms or phrases if primary dictionary misses
-          handleIdiomFallback(cleanQuery);
-        }
-      } catch (err) {
-        showError('Unable to connect to dictionary services. Please check your network connection.');
-      }
-    }
+                <!-- Detailed Breakdown List -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-teal-600"></i> Detailed Corrections & Feedback
+                        </h3>
+                        <span id="issuesCountBadge" class="text-xs px-2.5 py-1 rounded-full bg-slate-200 text-slate-700 font-medium">0 issues found</span>
+                    </div>
 
-    function renderDictionaryResult(entry) {
-      statusArea.classList.add('hidden');
-      resultContainer.classList.remove('hidden');
+                    <div id="correctionsList" class="space-y-4">
+                        <!-- Individual correction cards will be dynamically inserted here -->
+                    </div>
+                </div>
 
-      wordTitle.textContent = entry.word;
+            </div>
 
-      // Extract Phonetics & Audio
-      let ipa = entry.phonetic || '';
-      let audioUrl = '';
+        </div>
 
-      if (entry.phonetics && entry.phonetics.length > 0) {
-        for (let p of entry.phonetics) {
-          if (p.text && !ipa) ipa = p.text;
-          if (p.audio && !audioUrl) audioUrl = p.audio;
-        }
-      }
+        <!-- ================= PRACTICE QUIZ TAB ================= -->
+        <div id="quizTab" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">Interactive Grammar Practice</h2>
+                    <p class="text-sm text-slate-500 mt-1">Practice identifying common English mistakes in subject-verb agreement, prepositions, articles, and plural forms.</p>
+                </div>
+                <button onclick="generateNewQuiz()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-xl transition-all shadow-sm flex items-center gap-2">
+                    <i class="fa-solid fa-rotate"></i> Load New Questions
+                </button>
+            </div>
 
-      phoneticIPA.textContent = ipa ? ipa : '[ IPA unavailable ]';
-      phoneticRespelling.textContent = generateRespelling(entry.word, ipa);
-      currentAudioUrl = audioUrl;
-      audioBtn.style.display = audioUrl ? 'flex' : 'none';
+            <!-- Quiz Spinner Loading State -->
+            <div id="quizLoading" class="hidden bg-white rounded-2xl p-8 border border-slate-200 text-center space-y-3">
+                <i class="fa-solid fa-circle-notch fa-spin text-2xl text-teal-600"></i>
+                <p class="text-sm text-slate-600 font-medium">Generating practice challenges with Gemini...</p>
+            </div>
 
-      // Render Meanings
-      meaningsWrapper.innerHTML = '';
-      entry.meanings.forEach(m => {
-        const block = document.createElement('div');
-        block.className = 'bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700';
+            <!-- Quiz Items Container -->
+            <div id="quizContainer" class="space-y-4">
+                <!-- Dynamically populated quiz questions -->
+            </div>
+        </div>
 
-        let html = `<div class="text-brand-600 dark:text-brand-400 font-bold italic uppercase tracking-wider text-sm mb-4 pb-2 border-b border-slate-100 dark:border-slate-700">${m.partOfSpeech}</div>`;
-        html += `<ol class="list-decimal list-inside space-y-4">`;
+    </main>
 
-        m.definitions.forEach(def => {
-          html += `<li class="text-slate-700 dark:text-slate-300 leading-relaxed">
-            <span class="font-normal">${def.definition}</span>`;
-          
-          if (def.example) {
-            html += `<div class="mt-2 ml-5 text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border-l-4 border-brand-500">
-              💬 <em>"${def.example}"</em>
-            </div>`;
-          } else {
-            html += `<div class="mt-2 ml-5 text-sm text-slate-400 italic bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border-l-4 border-slate-300 dark:border-slate-700">
-              Example context: "She quickly understood how to apply the term ${entry.word} in daily conversation."
-            </div>`;
-          }
-          html += `</li>`;
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white text-sm px-4 py-3 rounded-xl shadow-xl flex items-center space-x-2 translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <i class="fa-solid fa-circle-info text-teal-400"></i>
+        <span id="toastMsg">Notification message</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-6 mt-12">
+        <div class="max-w-6xl mx-auto px-4 text-center text-xs text-slate-400 space-y-1">
+            <p>GrammarPro Assistant • Powered by Google Gemini AI API</p>
+            <p>Designed for clear, natural, and confident English communication.</p>
+        </div>
+    </footer>
+
+    <!-- Application Script -->
+    <script>
+        // API Configuration
+        const apiKey = "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+        // DOM Elements
+        const grammarInput = document.getElementById('grammarInput');
+        const charCount = document.getElementById('charCount');
+        const wordCount = document.getElementById('wordCount');
+        const checkGrammarBtn = document.getElementById('checkGrammarBtn');
+        const btnText = document.getElementById('btnText');
+        const loadingState = document.getElementById('loadingState');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const scoreValue = document.getElementById('scoreValue');
+        const fluencyBadge = document.getElementById('fluencyBadge');
+        const overallSummary = document.getElementById('overallSummary');
+        const fullCorrectedText = document.getElementById('fullCorrectedText');
+        const correctionsList = document.getElementById('correctionsList');
+        const issuesCountBadge = document.getElementById('issuesCountBadge');
+
+        // Input Counters Listener
+        grammarInput.addEventListener('input', () => {
+            const text = grammarInput.value;
+            charCount.textContent = `${text.length} characters`;
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            wordCount.textContent = `${words} words`;
         });
 
-        html += `</ol>`;
-        block.innerHTML = html;
-        meaningsWrapper.appendChild(block);
-      });
-    }
+        // Tab Switcher Logic
+        function switchTab(tab) {
+            const checkBtn = document.getElementById('navCheckBtn');
+            const quizBtn = document.getElementById('navQuizBtn');
+            const checkerTab = document.getElementById('checkerTab');
+            const quizTab = document.getElementById('quizTab');
 
-    // Idiom Fallback Handler
-    async function handleIdiomFallback(phrase) {
-      // Hardcoded common fallback database or Datamuse Definition check
-      try {
-        const res = await fetch(`https://api.datamuse.com/words?sp=${encodeURIComponent(phrase)}&md=d&max=1`);
-        const data = await res.json();
+            if (tab === 'check') {
+                checkBtn.className = "px-4 py-1.5 rounded-lg text-sm font-medium transition-all shadow-sm bg-white text-teal-700";
+                quizBtn.className = "px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-slate-600 hover:text-slate-900";
+                checkerTab.classList.remove('hidden');
+                quizTab.classList.add('hidden');
+            } else {
+                quizBtn.className = "px-4 py-1.5 rounded-lg text-sm font-medium transition-all shadow-sm bg-white text-teal-700";
+                checkBtn.className = "px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-slate-600 hover:text-slate-900";
+                quizTab.classList.remove('hidden');
+                checkerTab.classList.add('hidden');
 
-        if (data.length > 0 && data[0].defs) {
-          statusArea.classList.add('hidden');
-          resultContainer.classList.remove('hidden');
-
-          wordTitle.textContent = phrase;
-          phoneticIPA.textContent = '[ idiom / phrase expression ]';
-          phoneticRespelling.textContent = `[${phrase.replace(/\s+/g, '-')}]`;
-          audioBtn.style.display = 'none';
-
-          meaningsWrapper.innerHTML = '';
-          const block = document.createElement('div');
-          block.className = 'bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700';
-
-          let html = `<div class="text-brand-600 dark:text-brand-400 font-bold italic uppercase tracking-wider text-sm mb-4 pb-2 border-b border-slate-100 dark:border-slate-700"> idiom </div>`;
-          html += `<ol class="list-decimal list-inside space-y-4">`;
-
-          data[0].defs.forEach(d => {
-            const defText = d.split('\t')[1] || d;
-            html += `<li class="text-slate-700 dark:text-slate-300 leading-relaxed">
-              <span>${defText}</span>
-              <div class="mt-2 ml-5 text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border-l-4 border-brand-500">
-                💬 <em>"When faced with hard choices, you sometimes just have to ${phrase}."</em>
-              </div>
-            </li>`;
-          });
-
-          html += `</ol>`;
-          block.innerHTML = html;
-          meaningsWrapper.appendChild(block);
-        } else {
-          showError(`No definition found for "${phrase}". Try searching standard dictionary terms.`);
+                // Load quiz if container empty
+                if (document.getElementById('quizContainer').children.length === 0) {
+                    generateNewQuiz();
+                }
+            }
         }
-      } catch (e) {
-        showError(`No definition found for "${phrase}".`);
-      }
-    }
 
-    // Phonetic Respelling Generator Helper
-    function generateRespelling(word, ipa) {
-      if (ipa) {
-        let cleaned = ipa.replace(/[\/\u02C8\u02CC\u02D0]/g, '');
-        return `[${cleaned.split('').join('')}]`;
-      }
-      return `[${word.toLowerCase().split('').join('')}]`;
-    }
+        // Clear Text Area
+        function clearInput() {
+            grammarInput.value = '';
+            charCount.textContent = '0 characters';
+            wordCount.textContent = '0 words';
+            resultsContainer.classList.add('hidden');
+        }
 
-    // Audio Player Trigger
-    audioBtn.addEventListener('click', () => {
-      if (currentAudioUrl) {
-        const audio = new Audio(currentAudioUrl);
-        audio.play().catch(() => alert("Audio playback failed."));
-      } else {
-        const utterance = new SpeechSynthesisUtterance(wordTitle.textContent);
-        window.speechSynthesis.speak(utterance);
-      }
-    });
+        // Load Sample Text
+        function loadSampleText() {
+            grammarInput.value = "Asian peoples like themselves to be a doctor. I got 94 on English and I went to bathroom. Being an optician is also same.";
+            grammarInput.dispatchEvent(new Event('input'));
+        }
 
-    function showLoading(text) {
-      statusArea.classList.remove('hidden');
-      spinner.classList.remove('hidden');
-      statusText.textContent = text;
-      statusText.className = "text-slate-500 dark:text-slate-400 font-medium";
-    }
+        // Toast Helper
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            toastMsg.textContent = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
 
-    function showError(text) {
-      statusArea.classList.remove('hidden');
-      spinner.classList.add('hidden');
-      statusText.textContent = text;
-      statusText.className = "text-red-500 font-medium";
-    }
-  </script>
+        // Fetch API Helper with Retry Logic
+        async function fetchGeminiAPI(payload, retries = 3, delay = 1000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const res = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (res.ok) {
+                        return await res.json();
+                    }
+                } catch (err) {
+                    if (i === retries - 1) throw err;
+                }
+                await new Promise(r => setTimeout(r, delay * Math.pow(2, i)));
+            }
+            throw new Error("API call failed after retries");
+        }
+
+        // Main Analyze Function
+        async function analyzeGrammar() {
+            const text = grammarInput.value.trim();
+            if (!text) {
+                showToast("Please enter some text to check first!");
+                return;
+            }
+
+            // UI Loading state
+            checkGrammarBtn.disabled = true;
+            btnText.textContent = "Analyzing...";
+            loadingState.classList.remove('hidden');
+            resultsContainer.classList.add('hidden');
+
+            const systemPrompt = `You are an expert English grammar proofreader and teacher. Analyze the user's text for grammar, articles, prepositions, spelling, punctuation, and natural phrasing.
+            Provide your output ONLY in valid JSON with this schema:
+            {
+                "score": number (0 to 100 based on grammatical correctness and fluency),
+                "fluencyLevel": string ("Needs Work", "Good", "Fluent", or "Native"),
+                "overallSummary": string (concise 1-2 sentence overview feedback),
+                "fullCorrectedText": string (the complete paragraph rewritten clearly and naturally),
+                "corrections": [
+                    {
+                        "original": string (the original phrase or sentence containing the error, marked with ✘ in explanation),
+                        "corrected": string (the fixed version, marked with ✓ in explanation),
+                        "ruleType": string (e.g., "Articles", "Subject-Verb Agreement", "Prepositions", "Plural Alignment", "Spelling"),
+                        "explanation": string (clear, friendly explanation of why the rule applies and what was changed)
+                    }
+                ]
+            }
+            If the text has no errors, return score 100, no issues in corrections array, and praise in summary.`;
+
+            const payload = {
+                contents: [{ role: 'user', parts: [{ text: text }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    responseMimeType: "application/json"
+                }
+            };
+
+            try {
+                const data = await fetchGeminiAPI(payload);
+                const jsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!jsonText) throw new Error("Invalid response format");
+
+                const result = JSON.parse(jsonText);
+                renderResults(result);
+            } catch (error) {
+                console.error("Error analyzing grammar:", error);
+                showToast("Failed to analyze text. Please try again.");
+            } finally {
+                checkGrammarBtn.disabled = false;
+                btnText.textContent = "Check Grammar";
+                loadingState.classList.add('hidden');
+            }
+        }
+
+        // Render Results Card & Corrections
+        function renderResults(data) {
+            resultsContainer.classList.remove('hidden');
+
+            // Render Overview
+            scoreValue.textContent = `${data.score || 0}%`;
+            fluencyBadge.textContent = data.fluencyLevel || "Analyzed";
+            overallSummary.textContent = data.overallSummary || "Here are your grammar corrections.";
+            fullCorrectedText.textContent = data.fullCorrectedText || grammarInput.value;
+
+            // Corrections List
+            correctionsList.innerHTML = '';
+            const issues = data.corrections || [];
+            issuesCountBadge.textContent = `${issues.length} issue${issues.length === 1 ? '' : 's'} identified`;
+
+            if (issues.length === 0) {
+                correctionsList.innerHTML = `
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-center space-y-2">
+                        <i class="fa-solid fa-circle-check text-3xl text-emerald-500"></i>
+                        <h4 class="text-base font-bold text-emerald-900">No Grammar Issues Found!</h4>
+                        <p class="text-xs text-emerald-700">Your text sounds clean, natural, and grammatically accurate.</p>
+                    </div>
+                `;
+            } else {
+                issues.forEach((item, index) => {
+                    const card = document.createElement('div');
+                    card.className = "bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3 transition-all hover:border-slate-300";
+                    
+                    card.innerHTML = `
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                            <span class="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-teal-50 text-teal-700 border border-teal-200">
+                                ${item.ruleType || 'Grammar'}
+                            </span>
+                            <span class="text-xs text-slate-400 font-medium">Issue #${index + 1}</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                            <div class="bg-rose-50/80 border border-rose-200/80 rounded-xl p-3">
+                                <div class="text-xs font-bold text-rose-700 mb-1 flex items-center gap-1">
+                                    <span class="text-rose-600 text-sm">✘</span> Original Phrase
+                                </div>
+                                <p class="text-slate-800 font-medium line-through decoration-rose-400 decoration-2">${escapeHtml(item.original)}</p>
+                            </div>
+
+                            <div class="bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-3">
+                                <div class="text-xs font-bold text-emerald-700 mb-1 flex items-center gap-1">
+                                    <span class="text-emerald-600 text-sm">✓</span> Corrected Version
+                                </div>
+                                <p class="text-slate-900 font-bold">${escapeHtml(item.corrected)}</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 text-xs text-slate-600 leading-relaxed">
+                            <span class="font-semibold text-slate-800 mr-1"><i class="fa-solid fa-lightbulb text-amber-500"></i> Why this applies:</span>
+                            ${escapeHtml(item.explanation)}
+                        </div>
+                    `;
+                    correctionsList.appendChild(card);
+                });
+            }
+
+            // Scroll gently to results
+            resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Apply All Corrections Back to Main Text
+        function applyAllCorrections() {
+            const corrected = fullCorrectedText.textContent;
+            if (corrected) {
+                grammarInput.value = corrected;
+                grammarInput.dispatchEvent(new Event('input'));
+                showToast("Applied corrected text to editor!");
+            }
+        }
+
+        // Copy Corrected Text to Clipboard
+        function copyCorrectedText() {
+            const text = fullCorrectedText.textContent;
+            if (!text) return;
+
+            const tempArea = document.createElement("textarea");
+            tempArea.value = text;
+            document.body.appendChild(tempArea);
+            tempArea.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempArea);
+
+            showToast("Copied corrected text to clipboard!");
+        }
+
+        // Escape HTML helper
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // ================= QUIZ GENERATOR =================
+        async function generateNewQuiz() {
+            const quizContainer = document.getElementById('quizContainer');
+            const quizLoading = document.getElementById('quizLoading');
+
+            quizContainer.innerHTML = '';
+            quizLoading.classList.remove('hidden');
+
+            const systemPrompt = `Generate 4 distinct English grammar practice questions based on common ESL mistakes (such as incorrect articles, prepositions like 'in/on', subject-verb agreement, and plural matching).
+            Return ONLY a JSON array with this schema:
+            [
+                {
+                    "id": 1,
+                    "incorrectSentence": "I got 90 on Math test.",
+                    "correctSentence": "I got 90 in the Math test.",
+                    "options": [
+                        "I got 90 on Math test.",
+                        "I got 90 in Math test.",
+                        "I got 90 in the Math test.",
+                        "I am get 90 on Math test."
+                    ],
+                    "correctAnswerIndex": 2,
+                    "explanation": "We use 'in' for subjects or fields of study, and the article 'the' is needed for a specific test."
+                }
+            ]`;
+
+            const payload = {
+                contents: [{ role: 'user', parts: [{ text: "Generate 4 new grammar practice questions." }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: { responseMimeType: "application/json" }
+            };
+
+            try {
+                const data = await fetchGeminiAPI(payload);
+                const jsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!jsonText) throw new Error("Failed to load quiz");
+
+                const questions = JSON.parse(jsonText);
+                renderQuiz(questions);
+            } catch (err) {
+                console.error("Quiz generation error:", err);
+                quizContainer.innerHTML = `
+                    <div class="bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-xl text-center text-sm">
+                        Could not load practice questions. Please click "Load New Questions" to try again.
+                    </div>
+                `;
+            } finally {
+                quizLoading.classList.add('hidden');
+            }
+        }
+
+        function renderQuiz(questions) {
+            const quizContainer = document.getElementById('quizContainer');
+            quizContainer.innerHTML = '';
+
+            questions.forEach((q, qIdx) => {
+                const qCard = document.createElement('div');
+                qCard.className = "bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4";
+
+                let optionsHtml = '';
+                q.options.forEach((opt, optIdx) => {
+                    optionsHtml += `
+                        <button onclick="checkQuizAnswer(${qIdx}, ${optIdx}, ${q.correctAnswerIndex})" 
+                            id="q_${qIdx}_opt_${optIdx}"
+                            class="quiz-opt-btn w-full text-left px-4 py-3 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 font-medium text-sm text-slate-700 transition-all flex items-center justify-between">
+                            <span>${escapeHtml(opt)}</span>
+                            <i class="opt-icon fa-regular fa-circle text-slate-300"></i>
+                        </button>
+                    `;
+                });
+
+                qCard.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-md border border-teal-200">
+                            Question ${qIdx + 1}
+                        </span>
+                    </div>
+
+                    <p class="text-base font-semibold text-slate-900">
+                        Identify or choose the correct grammatical sentence:
+                    </p>
+
+                    <div class="space-y-2">
+                        ${optionsHtml}
+                    </div>
+
+                    <div id="q_${qIdx}_explanation" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-700 leading-relaxed mt-2">
+                        <span class="font-bold text-slate-900"><i class="fa-solid fa-circle-info text-teal-600 mr-1"></i> Explanation:</span>
+                        ${escapeHtml(q.explanation)}
+                    </div>
+                `;
+                quizContainer.appendChild(qCard);
+            });
+        }
+
+        function checkQuizAnswer(qIdx, selectedIdx, correctIdx) {
+            const expBox = document.getElementById(`q_${qIdx}_explanation`);
+            expBox.classList.remove('hidden');
+
+            const allButtons = document.querySelectorAll(`[id^="q_${qIdx}_opt_"]`);
+            allButtons.forEach((btn, idx) => {
+                btn.disabled = true;
+                btn.classList.remove('hover:bg-slate-50', 'hover:border-slate-300');
+
+                const icon = btn.querySelector('.opt-icon');
+
+                if (idx === correctIdx) {
+                    btn.className = "w-full text-left px-4 py-3 rounded-xl border-2 border-emerald-500 bg-emerald-50 text-emerald-900 font-bold text-sm transition-all flex items-center justify-between";
+                    icon.className = "opt-icon fa-solid fa-circle-check text-emerald-600 text-base";
+                } else if (idx === selectedIdx && selectedIdx !== correctIdx) {
+                    btn.className = "w-full text-left px-4 py-3 rounded-xl border-2 border-rose-400 bg-rose-50 text-rose-900 font-medium text-sm transition-all flex items-center justify-between";
+                    icon.className = "opt-icon fa-solid fa-circle-xmark text-rose-500 text-base";
+                } else {
+                    btn.classList.add('opacity-50');
+                }
+            });
+        }
+    </script>
 </body>
 </html>
